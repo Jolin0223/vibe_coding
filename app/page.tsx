@@ -23,6 +23,7 @@ type Project = {
   prdUrl?: string;
   category?: string;
   categories?: string[];
+  sortOrder?: number; // 显式声明sortOrder字段
 };
 
 export default function Home() {
@@ -31,14 +32,20 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState("全部作品");
   const [loading, setLoading] = useState(true);
 
-  // 核心改动2：替换API请求为读取本地JSON
+  // 核心改动2：替换API请求为读取本地JSON + 按sortOrder排序
   useEffect(() => {
     const loadLocalProjects = async () => {
       try {
-        // 直接使用导入的本地JSON数据
+        // 直接使用导入的本地JSON数据，并按sortOrder从小到大排序
         if (Array.isArray(initialProjects)) {
-          setProjects(initialProjects);
-          setFilteredProjects(initialProjects);
+          // 核心排序逻辑：sortOrder越小越靠前，无sortOrder则默认999排最后
+          const sortedProjects = initialProjects.sort((a, b) => {
+            const orderA = a.sortOrder ?? 999; // 兼容undefined的情况
+            const orderB = b.sortOrder ?? 999;
+            return orderA - orderB;
+          });
+          setProjects(sortedProjects);
+          setFilteredProjects(sortedProjects);
         } else {
           console.error("JSON文件格式错误，不是数组:", initialProjects);
           setProjects([]);
@@ -56,17 +63,23 @@ export default function Home() {
     loadLocalProjects();
   }, []);
 
-  // 保留原有分类过滤逻辑（无需改动）
+  // 核心改动3：分类过滤后也按sortOrder排序
   useEffect(() => {
     if (activeCategory === "全部作品") {
       setFilteredProjects(projects);
     } else {
-      setFilteredProjects(projects.filter((p) => {
+      // 过滤后仍保持sortOrder排序
+      const filtered = projects.filter((p) => {
           if (p.categories && p.categories.length > 0) {
               return p.categories.includes(activeCategory);
           }
           return p.category === activeCategory;
-      }));
+      }).sort((a, b) => { // 分类过滤后重新排序
+        const orderA = a.sortOrder ?? 999;
+        const orderB = b.sortOrder ?? 999;
+        return orderA - orderB;
+      });
+      setFilteredProjects(filtered);
     }
   }, [activeCategory, projects]);
 
