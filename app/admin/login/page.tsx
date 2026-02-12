@@ -10,26 +10,24 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // 核心修改：移除API请求，改为纯前端专属账号密码校验
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    try {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
+    // 你的专属账号密码（只有这组能登录）
+    const YOUR_USERNAME = 'Jolin0223';
+    const YOUR_PASSWORD = 'fighting2026';
 
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        router.push('/admin/dashboard');
-      } else {
-        setError(data.message || 'Login failed');
-      }
-    } catch (err) {
-      setError('An error occurred');
+    // 校验逻辑
+    if (username === YOUR_USERNAME && password === YOUR_PASSWORD) {
+      // 登录成功：标记状态 + 跳转到后台仪表盘
+      localStorage.setItem('adminLoggedIn', 'true');
+      router.push('/admin/dashboard');
+    } else {
+      // 登录失败：提示错误，清空密码
+      setError('账号或密码错误，无访问权限！');
+      setPassword('');
     }
   };
 
