@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jolin's AI-Native Product Lab</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);
+            --primary-gradient: linear-gradient(90deg, #6366F1 0%, #3B82F6 100%);
+            --text-main: #0F172A;
+            --text-sub: #64748B;
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 10px 25px -5px rgba(59, 130, 246, 0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header (超薄版: 60px) --- */
+        .header {
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 3rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #F1F5F9;
+            box-sizing: border-box;
+        }
+
+        .logo { font-weight: 900; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+        .logo-box { background: #3B82F6; color: white; width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-size: 0.8rem; }
+        .user-nav { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; color: #64748B; }
+
+        /* --- Main Content (紧凑布局) --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 2rem; /* 顶部间距减小 */
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* --- Hero Section (高度压缩) --- */
+        .hero-title {
+            font-size: 2.2rem; /* 字号微调 */
+            font-weight: 800;
+            margin: 0 0 0.5rem;
+            text-align: center;
+        }
+        .hero-title span { background: var(--primary-gradient); -webkit-background-clip: text; color: transparent; }
+
+        .hero-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            text-align: center;
+            margin-bottom: 2rem; /* 减少间距 */
+            line-height: 1.5;
+        }
+
+        /* --- Workflow Container (扁平化) --- */
+        .workflow-section {
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 2.5rem; /* 减少间距 */
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 15px 30px; /* 内部空间压缩 */
+            box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03);
+            border: 1px solid #F1F5F9;
+        }
+
+        /* --- Gallery Navigation --- */
+        .gallery-nav {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #E2E8F0;
+            padding-bottom: 8px;
+            width: 100%;
+            max-width: 1100px;
+            justify-content: center;
+        }
+        .nav-item { font-weight: 600; color: #94A3B8; cursor: pointer; padding-bottom: 8px; font-size: 0.9rem; transition: 0.3s; position: relative;}
+        .nav-item.active { color: #3B82F6; }
+        .nav-item.active::after { content:''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: #3B82F6; }
+
+        /* --- Gallery Grid --- */
+        .gallery-grid {
+            display: grid;
+            /* 1440px下两列，每列宽度足够容纳16:9横向卡片 */
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); 
+            gap: 24px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        /* --- Card Design (16:9 完美适配版) --- */
+        .card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #F1F5F9;
+            box-shadow: var(--shadow-card);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: row; /* 强制横向 */
+            height: 170px; /* 【关键】固定高度，极度省空间 */
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+            border-color: #BFDBFE;
+        }
+
+        /* 图片容器：锁死 16:9 比例 */
+        .card-img-box {
+            height: 100%; /* 跟随卡片高度 170px */
+            aspect-ratio: 16 / 9; /* 【关键】强制锁定 16:9 比例 */
+            /* 170px * (16/9) ≈ 302px 宽度 */
+            flex-shrink: 0; /* 防止被压缩 */
+            border-right: 1px solid #F1F5F9;
+            background: #E2E8F0;
+        }
+
+        .card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 完美填充 */
+        }
+
+        .card-content {
+            flex: 1; /* 占据剩余空间 */
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden; /* 防止内容溢出 */
+        }
+
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1E293B;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-ver { font-size: 12px; background: #F1F5F9; color: #64748B; padding: 1px 5px; border-radius: 4px; }
+
+        .card-tags { display: flex; gap: 6px; margin-bottom: 8px; }
+        .tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #EFF6FF; color: #3B82F6; font-weight: 600; display: flex; align-items: center; gap: 3px; }
+
+        .card-desc {
+            font-size: 12px;
+            color: #64748B;
+            line-height: 1.5;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* 限制2行 */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .highlight { color: #1E293B; font-weight: 600; }
+
+        .card-actions { display: flex; gap: 8px; margin-top: auto; }
+        
+        .btn {
+            flex: 1;
+            padding: 6px 0; /* 减小按钮高度 */
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .btn-outline { border: 1px solid #CBD5E1; color: #475569; background: white; }
+        .btn-outline:hover { background: #F8FAFC; border-color: #94A3B8; color: #0F172A; }
+        
+        .btn-primary { background: var(--primary-gradient); color: white; border: none; }
+        .btn-primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+        .footer { padding: 1.5rem; text-align: center; color: #94A3B8; font-size: 12px; margin-top: auto; border-top: 1px solid #F1F5F9; background: white;}
+
+        @media (max-width: 768px) {
+            .card { height: auto; flex-direction: column; }
+            .card-img-box { width: 100%; height: auto; aspect-ratio: 16/9; border-right: none; border-bottom: 1px solid #F1F5F9; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo">
+            <span class="logo-box">⚡</span> Jolin's Lab
+        </div>
+        <nav class="user-nav">
+            <a href="#" style="text-decoration: none; color: inherit;">管理后台</a>
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Jolin&backgroundColor=c0aca5" style="width:28px; height:28px; border-radius:50%; border:2px solid white;">
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <h1 class="hero-title">Jolin's <span>AI-Native Product Lab</span></h1>
+        <p class="hero-subtitle">
+            以 AI 为笔，重构教育产品设计流。跳过 Axure 和 PPT，<br>直接用 Vibe Coding 构建可交互的高保真原型。
+        </p>
+
+        <div class="workflow-section">
+            <svg viewBox="0 0 1000 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto;">
+                <defs>
+                    <linearGradient id="iconG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#60A5FA"/><stop offset="1" stop-color="#3B82F6"/></linearGradient>
+                    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#CBD5E1"/></marker>
+                </defs>
+                <g transform="translate(10, 10)">
+                    <rect x="0" y="0" width="140" height="90" rx="10" fill="white" stroke="#E2E8F0"/>
+                    <path d="M70 25C66 25 63 28 63 32C63 34.5 64 36.5 65.5 37.5L65 39H75L74.5 37.5C76 36.5 77 34.5 77 32C77 28 74 25 70 25ZM68.5 40.5H71.5V42H68.5V40.5Z" fill="url(#iconG)"/>
+                    <text x="70" y="65" text-anchor="middle" font-size="12" font-weight="bold" fill="#1E293B">1. 灵感</text>
+                    <text x="70" y="80" text-anchor="middle" font-size="10" fill="#94A3B8">Inspiration</text>
+                </g>
+                <path d="M150 55 H180" stroke="#CBD5E1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+                
+                <g transform="translate(190, 10)">
+                    <rect x="0" y="0" width="140" height="90" rx="10" fill="white" stroke="#E2E8F0"/>
+                    <path d="M63 30L68 35L63 40 M77 40H83" stroke="url(#iconG)" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="58" y="22" width="24" height="28" rx="3" stroke="url(#iconG)" stroke-width="2" fill="none"/>
+                    <text x="70" y="65" text-anchor="middle" font-size="12" font-weight="bold" fill="#1E293B">2. Vibe Coding</text>
+                    <text x="70" y="80" text-anchor="middle" font-size="10" fill="#94A3B8">HTML 生成</text>
+                </g>
+                <path d="M340 55 H370" stroke="#CBD5E1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+
+                <g transform="translate(380, 10)">
+                    <rect x="0" y="0" width="140" height="90" rx="10" fill="white" stroke="#E2E8F0"/>
+                    <path d="M66 42L64 45L67 44L77 34C78 33 78 31 77 30C76 29 74 29 73 30L66 42Z" fill="url(#iconG)"/>
+                    <text x="70" y="65" text-anchor="middle" font-size="12" font-weight="bold" fill="#1E293B">3. MasterGo</text>
+                    <text x="70" y="80" text-anchor="middle" font-size="10" fill="#94A3B8">SVG 编辑</text>
+                </g>
+                <path d="M530 55 H560" stroke="#CBD5E1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+
+                <g transform="translate(570, 10)">
+                    <rect x="0" y="0" width="140" height="90" rx="10" fill="white" stroke="#E2E8F0"/>
+                    <rect x="59" y="25" width="22" height="16" rx="2" stroke="url(#iconG)" stroke-width="2" fill="none"/>
+                    <path d="M68 30L74 33L68 36V30Z" fill="url(#iconG)"/>
+                    <line x1="57" y1="44" x2="83" y2="44" stroke="url(#iconG)" stroke-width="2"/>
+                    <text x="70" y="65" text-anchor="middle" font-size="12" font-weight="bold" fill="#1E293B">4. 调整 Demo</text>
+                    <text x="70" y="80" text-anchor="middle" font-size="10" fill="#94A3B8">交互验证</text>
+                </g>
+                <path d="M720 55 H750" stroke="#CBD5E1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+
+                <g transform="translate(760, 10)">
+                    <rect x="0" y="0" width="150" height="90" rx="10" fill="#F8FAFC" stroke="#3B82F6" stroke-width="1.5"/>
+                    <path d="M74 38L77 41L85 33" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M69 24H79L84 29V45H69V24Z" stroke="url(#iconG)" stroke-width="1.5" fill="none"/>
+                    <text x="75" y="65" text-anchor="middle" font-size="12" font-weight="bold" fill="#3B82F6">5. 生成 PRD</text>
+                    <text x="75" y="80" text-anchor="middle" font-size="10" fill="#64748B">文档落地</text>
+                </g>
+            </svg>
+        </div>
+
+        <div class="gallery-nav">
+            <div class="nav-item active">全部作品</div>
+            <div class="nav-item">交互原型</div>
+            <div class="nav-item">业务组件</div>
+            <div class="nav-item">创意实验</div>
+        </div>
+
+        <div class="gallery-grid">
+            
+            <div class="card">
+                <div class="card-img-box">
+                    <img src="https://picsum.photos/seed/eng/400/225" class="card-img" alt="Project">
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-header-row">
+                            <h3 class="card-title">小学英语超级管道工</h3>
+                            <span class="card-ver">v1.2</span>
+                        </div>
+                        <div class="card-tags">
+                            <span class="tag">⏱️ 2.5h</span>
+                            <span class="tag">🤖 Claude</span>
+                            <span class="tag">💻 0代码</span>
+                        </div>
+                        <p class="card-desc">
+                            <span class="highlight">【验证目标】</span>通过 AI 快速实现“拖拽归类”交互容器，验证 6-8 岁儿童对名词动词分类的认知负荷，替代原有的静态填空题。
+                        </p>
+                    </div>
+                    <div class="card-actions">
+                        <a href="#" class="btn btn-outline">📄 查看 PRD</a>
+                        <a href="#" class="btn btn-primary">体验 Demo →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-img-box">
+                    <img src="https://picsum.photos/seed/mario/400/225" class="card-img" alt="Project">
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-header-row">
+                            <h3 class="card-title">超级玛丽字母配对</h3>
+                            <span class="card-ver">v1.0</span>
+                        </div>
+                        <div class="card-tags">
+                            <span class="tag">⏱️ 1.5h</span>
+                            <span class="tag">🤖 GPT-4o</span>
+                            <span class="tag">🎮 游戏化</span>
+                        </div>
+                        <p class="card-desc">
+                            <span class="highlight">【验证目标】</span>将经典的平台跳跃机制与字母识别结合，测试游戏化激励对低龄段学生专注时长的提升效果。
+                        </p>
+                    </div>
+                    <div class="card-actions">
+                        <a href="#" class="btn btn-outline">📄 查看 PRD</a>
+                        <a href="#" class="btn btn-primary">体验 Demo →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-img-box">
+                    <img src="https://picsum.photos/seed/audio/400/225" class="card-img" alt="Project">
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-header-row">
+                            <h3 class="card-title">AI 语音互动绘本</h3>
+                            <span class="card-ver">Beta</span>
+                        </div>
+                        <div class="card-tags">
+                            <span class="tag">⏱️ 4.0h</span>
+                            <span class="tag">🤖 Gemini</span>
+                            <span class="tag">🎤 语音</span>
+                        </div>
+                        <p class="card-desc">
+                            <span class="highlight">【验证目标】</span>探索浏览器原生语音识别在绘本跟读场景中的可行性，以低成本验证“开口率”提升方案。
+                        </p>
+                    </div>
+                    <div class="card-actions">
+                        <a href="#" class="btn btn-outline">📄 查看 PRD</a>
+                        <a href="#" class="btn btn-primary">体验 Demo →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-img-box">
+                    <img src="https://picsum.photos/seed/draw/400/225" class="card-img" alt="Project">
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-header-row">
+                            <h3 class="card-title">AI 创意画板</h3>
+                            <span class="card-ver">MVP</span>
+                        </div>
+                        <div class="card-tags">
+                            <span class="tag">⏱️ 3.0h</span>
+                            <span class="tag">🤖 SD XL</span>
+                            <span class="tag">🎨 绘画</span>
+                        </div>
+                        <p class="card-desc">
+                            <span class="highlight">【验证目标】</span>验证儿童在无辅助情况下使用 AI 生成绘画的交互门槛及兴趣度。
+                        </p>
+                    </div>
+                    <div class="card-actions">
+                        <a href="#" class="btn btn-outline">📄 查看 PRD</a>
+                        <a href="#" class="btn btn-primary">体验 Demo →</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        © 2026 Jolin's AI-Native Product Lab. Built with Vibe Coding.
+    </footer>
+
+</body>
+</html>

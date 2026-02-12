@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI互动题板 - 进阶收集版</title>
+    <style>
+        :root {
+            --bg-color: #2b3a42;
+            --machine-border: #4FC3F7;
+            --machine-bg: #1a237e;
+            --bubble-orange: linear-gradient(135deg, #FFB74D 0%, #FF9800 50%, #F57C00 100%);
+            --bubble-green: linear-gradient(135deg, #AED581 0%, #8BC34A 50%, #689F38 100%);
+            --bubble-blue: linear-gradient(135deg, #4FC3F7 0%, #03A9F4 50%, #0277BD 100%);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+            background-color: #f0f4f8;
+            font-family: "Rounded Mplus 1c", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        .game-console {
+            position: relative;
+            width: 900px; height: 700px;
+            background: #29B6F6;
+            border-radius: 40px;
+            padding: 25px; padding-top: 15px;
+            box-shadow: 0 20px 0 #0288D1, 0 30px 20px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column;
+            user-select: none;
+        }
+
+        /* 装饰螺丝和把手 */
+        .screw { position: absolute; width: 15px; height: 15px; background: #FFEB3B; border-radius: 50%; box-shadow: inset 0 0 2px rgba(0,0,0,0.5); z-index: 10; }
+        .screw.tl { top: 15px; left: 15px; } .screw.tr { top: 15px; right: 15px; }
+        .screw.bl { bottom: 15px; left: 15px; } .screw.br { bottom: 15px; right: 15px; }
+        
+        .handle { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 120px; background: #B39DDB; border-radius: 20px; z-index: -1; box-shadow: inset -2px 0 5px rgba(0,0,0,0.2); }
+        .handle.left { left: -20px; } .handle.right { right: -20px; }
+
+        .dashboard { display: flex; justify-content: space-between; align-items: center; padding: 0 30px 10px 30px; color: #01579B; font-weight: bold; }
+        .score-board { background: rgba(255,255,255,0.2); padding: 5px 20px; border-radius: 20px; display: flex; gap: 15px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* 游戏主区域 */
+        .screen-area {
+            flex: 1;
+            background-color: #1a237e;
+            border-radius: 20px;
+            border: 4px solid #01579B;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .screen-bg {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 50px 50px; pointer-events: none;
+        }
+
+        /* 区域划分线 */
+        .zone-divider {
+            position: absolute;
+            bottom: 160px;
+            left: 20px; right: 20px;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+        }
+        .zone-label {
+            position: absolute; bottom: 165px; left: 30px;
+            color: rgba(255,255,255,0.4); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        /* 底部收集槽位 */
+        .collection-zone {
+            position: absolute;
+            bottom: 20px; left: 20px; right: 20px;
+            height: 120px;
+            display: flex;
+            justify-content: space-around; /* 自动平分空间 */
+            align-items: center;
+        }
+
+        .slot {
+            height: 100px;
+            /* width 由JS动态计算，或者用flex-basis */
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            border: 2px dashed rgba(255,255,255,0.1);
+            position: relative;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .slot::after {
+            content: 'EMPTY';
+            position: absolute;
+            color: rgba(255,255,255,0.1);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* 气泡样式 */
+        .bubble {
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            color: white; font-weight: bold;
+            cursor: pointer;
+            position: absolute; 
+            box-shadow: inset 0 10px 15px rgba(255,255,255,0.4), 0 5px 10px rgba(0,0,0,0.3);
+            transition: top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        transform 0.4s ease;
+            z-index: 10;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        
+        /* 文本容器（用于显示省略号） */
+        .bubble-text {
+            width: 100%;
+            min-width: 0; /* flex子元素必须设置，否则text-overflow不生效 */
+            max-width: 100%;
+            text-align: center;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            transition: font-size 0.3s ease;
+            display: block; /* 确保是块级元素 */
+        }
+        
+        /* Tooltip 完整内容展示 */
+        .bubble-tooltip {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.9);
+            color: #FFF;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -100%) translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .bubble-tooltip.show {
+            opacity: 1;
+            transform: translate(-50%, -100%) translateY(-15px);
+        }
+        .bubble-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+        }
+        
+        /* Web端：鼠标悬停显示tooltip */
+        .bubble[data-overflow="true"]:hover .bubble-tooltip {
+            opacity: 1;
+            transform: translate(-50%, -100%) translateY(-15px);
+        }
+        
+        /* 移动端：长按显示tooltip（通过JS控制） */
+        .bubble[data-overflow="true"].tooltip-active .bubble-tooltip {
+            opacity: 1;
+            transform: translate(-50%, -100%) translateY(-15px);
+        }
+        
+        .bubble img { width: 80%; height: 80%; object-fit: contain; pointer-events: none; }
+        
+        .bubble.orange { background: var(--bubble-orange); border: 2px solid #EF6C00; }
+        .bubble.green { background: var(--bubble-green); border: 2px solid #558B2F; }
+
+        /* 选中态 */
+        .bubble.selected {
+            transform: scale(1.15);
+            box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.6);
+            border-color: #FFF;
+            z-index: 100;
+        }
+
+        /* 收集态 */
+        .bubble.collected {
+            width: 70px !important; 
+            height: 70px !important; /* 变小，强制覆盖long-word */
+            border-radius: 50% !important; /* 恢复圆形 */
+            /* font-size 不再强制写死，由JS动态控制 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 5;
+            line-height: 1.1; /* 收集状态下更紧凑 */
+            padding: 4px; /* 减小内边距 */
+        }
+        .bubble.collected img { width: 70%; height: 70%; }
+        
+        .bubble.collected:hover { transform: scale(1.05); }
+        .bubble.collected::after {
+            content: '×'; 
+            position: absolute; top: -5px; right: -5px;
+            width: 16px; height: 16px; background: #FF5252;
+            border-radius: 50%; font-size: 12px; line-height: 16px; text-align: center;
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .bubble.collected:hover::after { opacity: 1; }
+
+        .bubble.result-correct {
+            border-color: #00E676 !important;
+            box-shadow: 0 0 15px #00E676 !important;
+            opacity: 1 !important;
+        }
+        .bubble.result-wrong {
+            border-color: #FF1744 !important;
+            box-shadow: 0 0 15px #FF1744 !important;
+            opacity: 1 !important;
+        }
+
+        @keyframes float {
+            0%, 100% { margin-top: 0; }
+            50% { margin-top: -10px; }
+        }
+        .bubble:not(.collected) {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .controls-area {
+            height: 70px; display: flex; justify-content: center; align-items: center;
+        }
+        .btn-submit {
+            background: linear-gradient(to bottom, #90A4AE, #607D8B);
+            color: #CFD8DC; border: none; padding: 12px 60px; border-radius: 30px;
+            font-size: 24px; font-weight: bold; cursor: not-allowed;
+            box-shadow: 0 4px 0 #455A64; transition: all 0.3s;
+        }
+        .btn-submit.active {
+            background: linear-gradient(to bottom, #FFEB3B, #FDD835);
+            color: #BF360C; cursor: pointer;
+            box-shadow: 0 6px 0 #F57F17;
+        }
+        .btn-submit.active:active { transform: translateY(4px); box-shadow: 0 2px 0 #F57F17; }
+        .btn-submit.next {
+             background: linear-gradient(to bottom, #76FF03, #64DD17);
+             color: #1B5E20;
+             cursor: pointer;
+             pointer-events: all;
+             box-shadow: 0 6px 0 #33691E;
+        }
+
+        .win-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; z-index: 200; opacity: 0; pointer-events: none;
+            transition: opacity 0.5s; backdrop-filter: blur(5px);
+            border-radius: 16px;
+        }
+        .win-overlay.show { opacity: 1; pointer-events: all; }
+        .star-container { font-size: 60px; margin: 20px 0; display: flex; gap: 10px; }
+        .star { color: #555; transition: color 0.5s; }
+        .star.gold { color: #FFD700; text-shadow: 0 0 20px #FFD700; }
+        .win-btn {
+            background: linear-gradient(to bottom, #FFEB3B, #FDD835); color: #d84315;
+            border: none; padding: 12px 40px; border-radius: 30px; font-size: 22px; font-weight: bold; cursor: pointer;
+            margin-top: 30px; box-shadow: 0 6px 0 #F57F17;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="game-console">
+        <div class="screw tl"></div><div class="screw tr"></div>
+        <div class="screw bl"></div><div class="screw br"></div>
+        <div class="handle left"></div><div class="handle right"></div>
+
+        <div class="dashboard">
+            <div style="font-size: 24px; color: #FFF; text-shadow: 0 2px 0 #0288D1;">Word Match - Collector <span id="levelIndicator" style="font-size: 16px; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:10px;">Level 1</span></div>
+            <div class="score-board">
+                <div style="color: #FFF; font-size: 18px;">Collected: <span id="progressText">0/5</span></div>
+            </div>
+        </div>
+
+        <div class="screen-area" id="gameBoard">
+            <div class="screen-bg"></div>
+            
+            <div class="zone-label">Items Pool</div>
+            <div class="zone-divider"></div>
+            
+            <div class="collection-zone" id="collectionZone">
+                <!-- Slots will be generated by JS -->
+            </div>
+
+            <div id="bubbleContainer"></div>
+
+            <div class="win-overlay" id="winOverlay">
+                <h1 id="winTitle" style="font-size: 48px; margin: 0; text-shadow: 0 4px 0 rgba(0,0,0,0.2);">Result</h1>
+                <div class="star-container">
+                    <span class="star">★</span><span class="star">★</span><span class="star">★</span>
+                </div>
+                <p id="winSubtitle" style="font-size: 20px; opacity: 0.9;">0 Mistakes</p>
+                <button id="winBtn" class="win-btn" onclick="nextLevelOrRestart()">Next Level</button>
+            </div>
+        </div>
+
+        <div class="controls-area">
+            <button id="btnSubmit" class="btn-submit" onclick="submitAnswers()">Submit Collection</button>
+        </div>
+    </div>
+
+<script>
+    // 资源 (Level 1 Images)
+    const svgs = {
+        apple: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 20 C40 5 20 10 20 35 C20 60 40 80 50 90 C60 80 80 60 80 35 C80 10 60 5 50 20 Z" fill="%23ff5252"/><path d="M50 20 C50 10 55 0 60 5" stroke="%234caf50" stroke-width="4" fill="none"/><path d="M50 20 C45 20 40 25 35 20" fill="none" stroke="%23a1887f" stroke-width="2"/></svg>`,
+        banana: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M20 80 Q 50 100 80 20 Q 85 10 90 15 Q 95 20 85 25 Q 60 90 20 90 Q 15 90 20 80 Z" fill="%23ffeb3b" stroke="%23fbc02d" stroke-width="2"/><line x1="20" y1="80" x2="25" y2="85" stroke="%23795548" stroke-width="3"/></svg>`,
+        cat: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="55" r="35" fill="%23ffcc80"/><polygon points="20,30 35,50 15,60" fill="%23ffcc80"/><polygon points="80,30 65,50 85,60" fill="%23ffcc80"/><circle cx="38" cy="48" r="4" fill="%23333"/><circle cx="62" cy="48" r="4" fill="%23333"/><path d="M45 58 Q50 62 55 58" stroke="%23333" stroke-width="2" fill="none"/><path d="M25 55 L5 50 M25 60 L5 65 M75 55 L95 50 M75 60 L95 65" stroke="%23333" stroke-width="2"/></svg>`,
+        dog: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30 40 Q 20 60 30 80 Q 50 95 70 80 Q 80 60 70 40 Q 50 20 30 40 Z" fill="%23d7ccc8"/><ellipse cx="35" cy="50" rx="5" ry="7" fill="%23333"/><ellipse cx="65" cy="50" rx="5" ry="7" fill="%23333"/><circle cx="50" cy="65" r="6" fill="%23333"/><path d="M30 40 L 15 55 Q 10 65 25 60 Z" fill="%238d6e63"/><path d="M70 40 L 85 55 Q 90 65 75 60 Z" fill="%238d6e63"/></svg>`,
+        car: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10 60 L20 40 L80 40 L90 60 L90 75 L10 75 Z" fill="%2342a5f5"/><rect x="25" y="45" width="20" height="12" fill="%23e3f2fd"/><rect x="55" y="45" width="20" height="12" fill="%23e3f2fd"/><circle cx="25" cy="75" r="8" fill="%23333"/><circle cx="75" cy="75" r="8" fill="%23333"/><circle cx="25" cy="75" r="3" fill="%2390a4ae"/><circle cx="75" cy="75" r="3" fill="%2390a4ae"/></svg>`
+    };
+
+    const AUDIO_SUCCESS = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAjAAAlJgADBQgLDxATFhgbHh8iJSgpKy4wMjU4Ojw+QUNHSExQU1VYW15gY2ZqbG9xdHZ6fH6BgoaJi42QkpWXmZueoKOlpqmrrK+xtre5ur2/wcTFx8nMzs/S1NXX2drd3+Hj5efp6+3v8fP1+P///wAAAAxuY210YXG+j78AAAAAAAABjAAAAAAAAAAAMAAAAAAAAAAAAF//uQZAAABiE3U/0AAAgAAAA0gAAABhU3U/0AAAgAAAA0gAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAABiE3U/0AAAgAAAA0gAAABhU3U/0AAAgAAAA0gAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAABiE3U/0AAAgAAAA0gAAABhU3U/0AAAgAAAA0gAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAABiE3U/0AAAgAAAA0gAAABhU3U/0AAAgAAAA0gAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"); 
+    const AUDIO_FAIL = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAjAAAlJgADBQgLDxATFhgbHh8iJSgpKy4wMjU4Ojw+QUNHSExQU1VYW15gY2ZqbG9xdHZ6fH6BgoaJi42QkpWXmZueoKOlpqmrrK+xtre5ur2/wcTFx8nMzs/S1NXX2drd3+Hj5efp6+3v8fP1+P///wAAAAxuY210YXG+j78AAAAAAAABjAAAAAAAAAAAMAAAAAAAAAAAAF//uQZAAABiE3U/0AAAgAAAA0gAAABhU3U/0AAAgAAAA0gAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAABiE3U/0AAAgAAAA0gAAABhU3U/0AAAgAAAA0gAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAABiE3U/0AAAgAAAA0gAAABhU3U/0AAAgAAAA0gAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAABiE3U/0AAAgAAAA0gAAABhU3U/0AAAgAAAA0gAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"); 
+
+    // --- Levels Data ---
+    const levels = [
+        {
+            id: 1,
+            pairs: [
+                { id: 1, content: "Apple", type: "text", matchId: 101, color: "green" },
+                { id: 2, content: svgs.apple, type: "image", matchId: 101, color: "orange" },
+                { id: 3, content: "Banana", type: "text", matchId: 102, color: "green" },
+                { id: 4, content: svgs.banana, type: "image", matchId: 102, color: "orange" },
+                { id: 5, content: "Cat", type: "text", matchId: 103, color: "green" },
+                { id: 6, content: svgs.cat, type: "image", matchId: 103, color: "orange" },
+                { id: 7, content: "Dog", type: "text", matchId: 104, color: "green" },
+                { id: 8, content: svgs.dog, type: "image", matchId: 104, color: "orange" },
+                { id: 9, content: "Car", type: "text", matchId: 105, color: "green" },
+                { id: 10, content: svgs.car, type: "image", matchId: 105, color: "orange" },
+            ]
+        },
+        {
+            id: 2,
+            pairs: [
+                { id: 11, content: "Congratulations", type: "text", matchId: 201, color: "green" },
+                { id: 12, content: "祝贺", type: "text", matchId: 201, color: "orange" },
+                { id: 13, content: "Helicopter", type: "text", matchId: 202, color: "green" },
+                { id: 14, content: "直升机", type: "text", matchId: 202, color: "orange" },
+                { id: 15, content: "Strawberry", type: "text", matchId: 203, color: "green" },
+                { id: 16, content: "草莓", type: "text", matchId: 203, color: "orange" },
+                { id: 17, content: "Watermelon", type: "text", matchId: 204, color: "green" },
+                { id: 18, content: "西瓜", type: "text", matchId: 204, color: "orange" },
+                { id: 19, content: "Microphone", type: "text", matchId: 205, color: "green" },
+                { id: 20, content: "麦克风", type: "text", matchId: 205, color: "orange" },
+                { id: 21, content: "Elephant", type: "text", matchId: 206, color: "green" },
+                { id: 22, content: "大象", type: "text", matchId: 206, color: "orange" },
+            ]
+        },
+        {
+            id: 3,
+            pairs: [
+                { id: 31, content: "Congratulations", type: "text", matchId: 301, color: "green" },
+                { id: 32, content: "祝贺", type: "text", matchId: 301, color: "orange" },
+                { id: 33, content: "Hippopotamus", type: "text", matchId: 302, color: "green" },
+                { id: 34, content: "河马", type: "text", matchId: 302, color: "orange" },
+                { id: 35, content: "Tyrannosaurus", type: "text", matchId: 303, color: "green" },
+                { id: 36, content: "霸王龙", type: "text", matchId: 303, color: "orange" },
+                { id: 37, content: "Refrigerator", type: "text", matchId: 304, color: "green" },
+                { id: 38, content: "冰箱", type: "text", matchId: 304, color: "orange" },
+                { id: 39, content: "Encyclopedia", type: "text", matchId: 305, color: "green" },
+                { id: 40, content: "百科全书", type: "text", matchId: 305, color: "orange" },
+            ]
+        }
+    ];
+
+    let currentLevelIndex = 0;
+    let selectedBubble = null;
+    let slotState = []; // Will be sized dynamically based on pair count
+    let totalPairs = 0;
+
+    // DOM
+    const bubbleContainer = document.getElementById('bubbleContainer');
+    const winOverlay = document.getElementById('winOverlay');
+    const elProgressText = document.getElementById('progressText');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const collectionZone = document.getElementById('collectionZone');
+    const levelIndicator = document.getElementById('levelIndicator');
+    const winBtn = document.getElementById('winBtn');
+
+    function initGame(levelIndex) {
+        currentLevelIndex = levelIndex;
+        const levelData = levels[levelIndex];
+        
+        // Update UI info
+        levelIndicator.innerText = `Level ${levelIndex + 1}`;
+        totalPairs = levelData.pairs.length / 2;
+        
+        // Reset State
+        bubbleContainer.innerHTML = '';
+        winOverlay.classList.remove('show');
+        selectedBubble = null;
+        slotState = new Array(totalPairs).fill(null);
+        
+        // Reset Button
+        btnSubmit.classList.remove('active', 'next');
+        btnSubmit.innerText = "Submit Collection";
+        btnSubmit.onclick = submitAnswers; // reset handler
+
+        // Generate Slots dynamically
+        collectionZone.innerHTML = '';
+        for (let i = 0; i < totalPairs; i++) {
+            const slot = document.createElement('div');
+            slot.classList.add('slot');
+            slot.dataset.index = i;
+            // Dynamic width: total width approx 840px available. 
+            // 5 pairs -> ~140px. 6 pairs -> ~125px.
+            const slotWidth = totalPairs > 5 ? 125 : 140;
+            slot.style.width = `${slotWidth}px`;
+            collectionZone.appendChild(slot);
+        }
+
+        updateUI();
+
+        const shuffledData = [...levelData.pairs].sort(() => Math.random() - 0.5);
+        
+        // Boundaries
+        const maxX = 720; 
+        const maxY = 260;
+        const placedBubbles = []; 
+        const minGap = 10;
+        const maxAttempts = 200;
+
+        shuffledData.forEach((item) => {
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+            bubble.classList.add(item.color);
+            
+            if (item.type === 'image') {
+                const img = document.createElement('img');
+                img.src = item.content;
+                bubble.appendChild(img);
+                if(item.color === 'orange') {
+                     bubble.style.background = 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%)';
+                     bubble.style.border = '2px solid #FF9800';
+                }
+            } else {
+                // 创建文本容器span（用于显示省略号）
+                const textSpan = document.createElement('span');
+                textSpan.className = 'bubble-text';
+                textSpan.textContent = item.content;
+                bubble.appendChild(textSpan);
+                
+                // 存储文本元素的引用，方便后续操作
+                bubble.textElement = textSpan;
+                
+                // Font Size Adaptation for Long Words (Initial State)
+                // 注意：这里传入bubble而不是textSpan，因为adjustFontSize内部会调用getBubbleText
+                const fitResult = adjustFontSize(bubble, item.content, false);
+                
+                // 如果文字无法完全适配（显示省略号），添加tooltip功能
+                if (fitResult && !fitResult.isFitted) {
+                    addTooltipToBubble(bubble, item.content);
+                }
+            }
+
+            bubble.dataset.id = item.id;
+            bubble.dataset.matchId = item.matchId;
+
+            // Collision Detection (所有气泡统一100px圆形)
+            const bubbleDiameter = 100;
+            let x, y;
+            let attempt = 0;
+            let validPosition = false;
+
+            while (!validPosition && attempt < maxAttempts) {
+                x = Math.random() * (maxX - 20) + 10;
+                y = Math.random() * (maxY - 20) + 10;
+                validPosition = true;
+                
+                for (const pos of placedBubbles) {
+                    const dx = x - pos.x;
+                    const dy = y - pos.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < (bubbleDiameter + minGap)) {
+                        validPosition = false;
+                        break;
+                    }
+                }
+                attempt++;
+            }
+            placedBubbles.push({x, y});
+            
+            bubble.style.left = x + 'px';
+            bubble.style.top = y + 'px';
+            bubble.dataset.originX = x;
+            bubble.dataset.originY = y;
+
+            bubble.onclick = (e) => handleBubbleClick(bubble, e);
+            bubbleContainer.appendChild(bubble);
+            
+            // 应用自适应字体大小（使用Canvas测量，无需等待DOM渲染）
+            if (item.type === 'text') {
+                adjustFontSize(bubble, item.content, false);
+            }
+        });
+    }
+
+    /**
+     * 通用自适应字体大小函数
+     * 适用于任何固定尺寸的容器（圆形气泡、水管、矩形框等）
+     * 核心原理：使用Canvas API精确测量文字宽度，按比例缩放字体直到完全适配容器
+     * 
+     * 使用场景示例：
+     * 1. 圆形气泡：fitTextToContainer(el, "Congratulations", {width:100, height:100, padding:8})
+     * 2. 水管题板：fitTextToContainer(el, "Word", {width:80, height:40, padding:5})
+     * 3. 矩形卡片：fitTextToContainer(el, "Text", {width:200, height:100, padding:10})
+     * 
+     * @param {HTMLElement} element - 目标元素
+     * @param {string} text - 文本内容
+     * @param {Object} containerSize - 容器尺寸 {width, height, padding}
+     * @param {Object} options - 选项 {minFontSize, maxFontSize, fontFamily, fontWeight}
+     * @returns {number} 计算出的最佳字体大小
+     */
+    function fitTextToContainer(element, text, containerSize, options = {}) {
+        if (!text || !element) return;
+        
+        const {
+            width = 100,
+            height = 100,
+            padding = 8
+        } = containerSize;
+        
+        // 获取元素的实际字体样式（如果已设置）
+        const computedStyle = window.getComputedStyle ? window.getComputedStyle(element) : null;
+        const {
+            minFontSize = 8,
+            maxFontSize = 18,
+            fontFamily = (computedStyle && computedStyle.fontFamily) || 'Arial, sans-serif',
+            fontWeight = (computedStyle && computedStyle.fontWeight) || 'bold'
+        } = options;
+        
+        // 计算可用空间（考虑padding）
+        // 对于圆形容器，取最小边作为可用空间（内接正方形）
+        // 对于矩形容器，使用宽度作为基准
+        const availableWidth = width - (padding * 2);
+        const availableHeight = height - (padding * 2);
+        const availableSpace = Math.min(availableWidth, availableHeight);
+        
+        // 使用Canvas API精确测量文字宽度（比DOM测量更准确）
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 设置字体样式
+        ctx.font = `${fontWeight} ${maxFontSize}px ${fontFamily}`;
+        
+        // 测量文字宽度
+        const textMetrics = ctx.measureText(text);
+        const textWidth = textMetrics.width;
+        
+        // 计算最佳字体大小（按比例缩放）
+        let fontSize = maxFontSize;
+        let isFitted = true; // 标记是否完全适配
+        
+        if (textWidth > availableSpace) {
+            // 按比例缩小：新字体 = (可用宽度 / 当前文字宽度) * 当前字体
+            fontSize = (availableSpace / textWidth) * maxFontSize;
+            // 向下取整，避免字体过大
+            fontSize = Math.floor(fontSize);
+            
+            // ⚠️ 严格限制最小值：如果计算出的字体小于最小值，强制使用最小值
+            // 这是关键：防止无限缩放，保证最小可读性
+            if (fontSize < minFontSize) {
+                // 强制使用最小值，不再继续缩小
+                fontSize = minFontSize;
+                
+                // 验证：使用最小字体时，文字是否仍然超出容器
+                ctx.font = `${fontWeight} ${minFontSize}px ${fontFamily}`;
+                const minTextWidth = ctx.measureText(text).width;
+                
+                if (minTextWidth > availableSpace) {
+                    // 即使使用最小字体也无法完全显示
+                    // 启用省略号模式作为兜底方案
+                    isFitted = false;
+                }
+            }
+            
+            // 确保不超过最大值（双重保险）
+            fontSize = Math.min(fontSize, maxFontSize);
+        }
+        
+        // 最终检查：确保字体大小严格在 [minFontSize, maxFontSize] 范围内
+        fontSize = Math.max(minFontSize, Math.min(fontSize, maxFontSize));
+        
+        // 应用字体大小
+        element.style.fontSize = fontSize + 'px';
+        
+        // 计算实际可用宽度（考虑padding）
+        const actualAvailableWidth = availableSpace;
+        
+        // 始终设置省略号相关样式（确保在所有情况下都能正确显示）
+        // 关键：对于flex布局中的子元素，必须设置min-width: 0 才能让text-overflow生效
+        element.style.overflow = 'hidden';
+        element.style.textOverflow = 'ellipsis';
+        element.style.whiteSpace = 'nowrap';
+        element.style.minWidth = '0';
+        element.style.display = 'block'; // 确保是块级元素
+        
+        // 如果无法完全适配，设置最大宽度限制
+        if (!isFitted) {
+            // 强制设置最大宽度，确保省略号显示
+            element.style.maxWidth = actualAvailableWidth + 'px';
+            element.style.width = actualAvailableWidth + 'px';
+            element.setAttribute('data-overflow', 'true');
+        } else {
+            // 完全适配时，使用100%宽度（flex会自动居中）
+            element.style.maxWidth = '100%';
+            element.style.width = '100%';
+            element.removeAttribute('data-overflow');
+        }
+        
+        return { fontSize, isFitted };
+    }
+
+    /**
+     * 获取气泡的文本元素和文本内容
+     */
+    function getBubbleText(bubble) {
+        // 优先使用存储的textElement引用
+        if (bubble.textElement) {
+            return {
+                element: bubble.textElement,
+                text: bubble.textElement.textContent || bubble.textElement.innerText
+            };
+        }
+        // 如果没有，尝试查找.bubble-text元素
+        const textEl = bubble.querySelector('.bubble-text');
+        if (textEl) {
+            bubble.textElement = textEl; // 缓存引用
+            return {
+                element: textEl,
+                text: textEl.textContent || textEl.innerText
+            };
+        }
+        // 兜底：直接使用bubble的文本
+        return {
+            element: bubble,
+            text: bubble.textContent || bubble.innerText || ''
+        };
+    }
+
+    /**
+     * 调整气泡字体大小（封装fitTextToContainer，适配当前游戏场景）
+     * @returns {Object|null} 返回fitTextToContainer的结果，包含fontSize和isFitted
+     */
+    function adjustFontSize(bubble, text, isCollected) {
+        if (!text) return null;
+        
+        // 获取文本元素（可能是span.bubble-text或bubble本身）
+        const textInfo = getBubbleText(bubble);
+        const textElement = textInfo.element;
+        const actualText = text || textInfo.text;
+        
+        // 收集状态：容器变小
+        if (isCollected) {
+            return fitTextToContainer(textElement, actualText, {
+                width: 70,
+                height: 70,
+                padding: 4
+            }, {
+                minFontSize: 18, // 统一最小字体18px
+                maxFontSize: 18  // 收集状态也使用18px（因为容器小，可能需要省略号）
+            });
+        }
+        
+        // 浮动状态：正常大小
+        return fitTextToContainer(textElement, actualText, {
+            width: 100,
+            height: 100,
+            padding: 8
+        }, {
+            minFontSize: 18, // 最小字体18px
+            maxFontSize: 18  // 最大字体也是18px（固定大小）
+        });
+    }
+
+    /**
+     * 为气泡添加tooltip功能（显示完整内容）
+     * Web端：鼠标悬停显示
+     * Pad端：长按显示
+     */
+    function addTooltipToBubble(bubble, fullText) {
+        // 标记气泡有溢出内容
+        bubble.setAttribute('data-overflow', 'true');
+        
+        // 创建tooltip元素
+        const tooltip = document.createElement('div');
+        tooltip.className = 'bubble-tooltip';
+        tooltip.textContent = fullText;
+        bubble.appendChild(tooltip);
+        
+        // 长按检测变量
+        let longPressTimer = null;
+        const LONG_PRESS_DURATION = 500; // 500ms长按
+        
+        // 更新tooltip位置
+        function updateTooltipPosition() {
+            const rect = bubble.getBoundingClientRect();
+            tooltip.style.left = rect.left + rect.width / 2 + 'px';
+            tooltip.style.top = rect.top + 'px';
+        }
+        
+        // 显示tooltip
+        function showTooltip() {
+            updateTooltipPosition();
+            bubble.classList.add('tooltip-active');
+            tooltip.classList.add('show');
+        }
+        
+        // 隐藏tooltip
+        function hideTooltip() {
+            bubble.classList.remove('tooltip-active');
+            tooltip.classList.remove('show');
+        }
+        
+        // Web端：鼠标悬停
+        bubble.addEventListener('mouseenter', () => {
+            showTooltip();
+        });
+        
+        bubble.addEventListener('mousemove', () => {
+            if (tooltip.classList.contains('show')) {
+                updateTooltipPosition();
+            }
+        });
+        
+        bubble.addEventListener('mouseleave', () => {
+            hideTooltip();
+        });
+        
+        // 移动端：长按检测
+        bubble.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // 防止触发点击事件
+            longPressTimer = setTimeout(() => {
+                showTooltip();
+            }, LONG_PRESS_DURATION);
+        });
+        
+        bubble.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            // 延迟隐藏，给用户时间查看
+            setTimeout(() => {
+                hideTooltip();
+            }, 2000); // 2秒后自动隐藏
+        });
+        
+        bubble.addEventListener('touchcancel', () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            hideTooltip();
+        });
+        
+        // 点击其他地方时隐藏tooltip
+        document.addEventListener('click', (e) => {
+            if (!bubble.contains(e.target)) {
+                hideTooltip();
+            }
+        });
+        
+        // 窗口大小改变时更新位置
+        window.addEventListener('resize', updateTooltipPosition);
+    }
+
+    function updateUI() {
+        const collectedCount = slotState.filter(s => s !== null).length;
+        elProgressText.innerText = `${collectedCount}/${totalPairs}`;
+        
+        if (collectedCount === totalPairs) {
+            btnSubmit.classList.add('active');
+            btnSubmit.innerText = "Submit Collection!";
+        } else {
+            btnSubmit.classList.remove('active');
+            btnSubmit.innerText = "Submit Collection";
+        }
+    }
+
+    function handleBubbleClick(bubble, e) {
+        e.stopPropagation();
+        if (bubble.classList.contains('collected')) {
+            const slotIndex = parseInt(bubble.dataset.slotIndex);
+            undoPair(slotIndex);
+            return;
+        }
+
+        if (selectedBubble === bubble) {
+            bubble.classList.remove('selected');
+            selectedBubble = null;
+            return;
+        }
+
+        if (!selectedBubble) {
+            selectedBubble = bubble;
+            bubble.classList.add('selected');
+        } else {
+            const b1 = selectedBubble;
+            const b2 = bubble;
+            const emptySlotIndex = slotState.findIndex(s => s === null);
+            
+            if (emptySlotIndex !== -1) {
+                moveToSlot(b1, b2, emptySlotIndex);
+            } else {
+                // Flash alert or visual feedback that it's full?
+                // For now, just reset selection
+                b1.classList.remove('selected');
+                selectedBubble = null;
+            }
+        }
+    }
+
+    function moveToSlot(b1, b2, index) {
+        b1.classList.remove('selected');
+        b2.classList.remove('selected');
+        selectedBubble = null;
+
+        slotState[index] = { b1, b2 };
+        
+        b1.classList.add('collected');
+        b2.classList.add('collected');
+        b1.dataset.slotIndex = index;
+        b2.dataset.slotIndex = index;
+
+        // Apply smaller font for collected state
+        const b1Text = getBubbleText(b1);
+        const b2Text = getBubbleText(b2);
+        const b1FitResult = adjustFontSize(b1, b1Text.text, true);
+        const b2FitResult = adjustFontSize(b2, b2Text.text, true);
+        
+        // 如果收集后文字无法完全适配，添加tooltip
+        if (b1FitResult && !b1FitResult.isFitted && !b1.querySelector('.bubble-tooltip')) {
+            addTooltipToBubble(b1, b1Text.text);
+        }
+        if (b2FitResult && !b2FitResult.isFitted && !b2.querySelector('.bubble-tooltip')) {
+            addTooltipToBubble(b2, b2Text.text);
+        }
+
+        // Get fresh slot reference (since they are dynamic now)
+        const currentSlots = document.querySelectorAll('.slot');
+        const slotRect = currentSlots[index].getBoundingClientRect();
+        const containerRect = document.querySelector('.screen-area').getBoundingClientRect();
+        
+        const slotLeft = slotRect.left - containerRect.left;
+        const slotTop = slotRect.top - containerRect.top;
+        const slotW = slotRect.width;
+
+        // Bubble size is 70px when collected.
+        
+        const b1Left = slotLeft + (slotW / 2) - 35 - 15; // Shift left
+        const b2Left = slotLeft + (slotW / 2) - 35 + 15; // Shift right overlap
+
+        // Layout: Side by Side
+        b1.style.left = (slotLeft + 10) + 'px';
+        b1.style.top = (slotTop + 15) + 'px';
+        
+        b2.style.left = (slotLeft + slotW - 70 - 10) + 'px'; // Right align
+        b2.style.top = (slotTop + 15) + 'px';
+
+        updateUI();
+    }
+
+    function undoPair(index) {
+        const pair = slotState[index];
+        if (!pair) return;
+        const { b1, b2 } = pair;
+
+        b1.classList.remove('collected');
+        b2.classList.remove('collected');
+        b1.classList.remove('result-correct', 'result-wrong');
+        b2.classList.remove('result-correct', 'result-wrong');
+        
+        // Restore larger font size
+        const b1Text = getBubbleText(b1);
+        const b2Text = getBubbleText(b2);
+        adjustFontSize(b1, b1Text.text, false);
+        adjustFontSize(b2, b2Text.text, false);
+        
+        delete b1.dataset.slotIndex;
+        delete b2.dataset.slotIndex;
+
+        b1.style.left = b1.dataset.originX + 'px';
+        b1.style.top = b1.dataset.originY + 'px';
+        b2.style.left = b2.dataset.originX + 'px';
+        b2.style.top = b2.dataset.originY + 'px';
+
+        slotState[index] = null;
+        updateUI();
+    }
+
+    function submitAnswers() {
+        if (slotState.some(s => s === null)) return;
+
+        let wrongCount = 0;
+        slotState.forEach(pair => {
+            const { b1, b2 } = pair;
+            const id1 = b1.dataset.matchId;
+            const id2 = b2.dataset.matchId;
+            if (id1 === id2) {
+                b1.classList.add('result-correct');
+                b2.classList.add('result-correct');
+            } else {
+                wrongCount++;
+                b1.classList.add('result-wrong');
+                b2.classList.add('result-wrong');
+            }
+        });
+
+        if (wrongCount === 0) {
+            AUDIO_SUCCESS.play();
+        } else {
+            AUDIO_FAIL.play();
+        }
+
+        setTimeout(() => {
+            showWinModal(wrongCount);
+        }, 1200);
+    }
+
+    function showWinModal(mistakes) {
+        let stars = 3;
+        let title = "Level Complete!";
+        let btnText = "Try Again";
+        
+        const isLastLevel = currentLevelIndex === levels.length - 1;
+
+        if (mistakes === 0) { 
+            stars = 3; 
+            title = "Perfect!"; 
+        } 
+        else if (mistakes <= 2) { 
+            stars = 2; 
+            title = "Good Job!"; 
+        } 
+        else { 
+            stars = 1; 
+            title = "Keep Practicing!"; 
+        }
+
+        // 按钮逻辑：只要不是最后一关，就显示 Next Level（无论对错，允许跳过）
+        // 如果是最后一关，显示 Play Again
+        if (!isLastLevel) {
+            btnText = "Next Level";
+        } else {
+            btnText = "Play Again";
+        }
+
+        document.getElementById('winTitle').innerText = title;
+        document.getElementById('winSubtitle').innerText = `${mistakes} Mismatched Pairs`;
+        winBtn.innerText = btnText;
+        
+        winBtn.onclick = () => {
+             if (btnText === "Next Level") {
+                 initGame(currentLevelIndex + 1);
+             } else {
+                 initGame(0); // Restart from beginning
+             }
+        };
+
+        const starEls = document.querySelectorAll('.star');
+        starEls.forEach((el, idx) => {
+            if (idx < stars) el.classList.add('gold');
+            else el.classList.remove('gold');
+        });
+
+        winOverlay.classList.add('show');
+    }
+    
+    // Start at Level 0
+    initGame(0);
+</script>
+</body>
+</html>

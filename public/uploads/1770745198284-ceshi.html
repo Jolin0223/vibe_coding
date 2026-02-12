@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI课件效果测评 - V1.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* 内联 CSS 样式 */
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #F3F4F6; }
+        .tab-active { border-bottom: 2px solid #2563EB; color: #2563EB; font-weight: 600; }
+        .tab-inactive { color: #6B7280; hover:color: #374151; }
+        /* 隐藏滚动条但保留功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 登录遮罩层动画 */
+        .modal-enter { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-20">
+        <div class="h-16 flex items-center justify-center border-b border-slate-700 bg-slate-800">
+            <i class="fa-solid fa-flask text-blue-400 mr-2"></i>
+            <span class="font-bold text-lg tracking-wide">AI课件效果测评</span>
+        </div>
+        
+        <div class="flex-1 py-6 space-y-2">
+            <div class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">教研端 (User)</div>
+            <button onclick="switchView('teacher')" id="nav-teacher" class="w-full text-left px-6 py-3 bg-blue-600 text-white border-r-4 border-blue-400 transition hover:bg-slate-800">
+                <i class="fa-solid fa-pen-to-square mr-3 w-5"></i> 效果评测
+            </button>
+
+            <div class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">管理端 (Admin)</div>
+            <button onclick="attemptAdminAccess('admin-task')" id="nav-admin-task" class="w-full text-left px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-list-check mr-3 w-5"></i> 任务管理
+            </button>
+            <button onclick="attemptAdminAccess('admin-stats')" id="nav-admin-stats" class="w-full text-left px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                <i class="fa-solid fa-chart-line mr-3 w-5"></i> 数据洞察
+            </button>
+        </div>
+        
+        <div class="p-4 border-t border-slate-700">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">PM</div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium">Jolin</p>
+                    <p class="text-xs text-slate-400">产品经理</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm z-10">
+            <h2 id="page-title" class="text-xl font-bold text-gray-800">互动课件效果评测</h2>
+            <div class="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">当前产品版本：V1.0</div>
+        </header>
+
+        <div class="flex-1 overflow-auto p-8" id="content-area">
+            
+            <div id="view-teacher" class="max-w-7xl mx-auto space-y-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-1 flex space-x-1 w-fit mb-6">
+                    <button onclick="switchTeacherTab('pending')" id="tab-pending" class="px-6 py-2 rounded-md text-sm font-medium bg-blue-100 text-blue-700 transition">待处理任务 (2)</button>
+                    <button onclick="switchTeacherTab('done')" id="tab-done" class="px-6 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 transition">已完成历史</button>
+                </div>
+
+                <div id="task-list-container" class="space-y-8">
+                    </div>
+            </div>
+
+            <div id="view-admin-task" class="hidden max-w-5xl mx-auto">
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+                    <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fa-solid fa-plus-circle text-blue-600 mr-2"></i> 发布新的测评任务
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">学科分类</label>
+                            <select class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option>英语 (English)</option>
+                                <option>数学 (Math)</option>
+                                <option>语文 (Chinese)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">互动课件名称</label>
+                            <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="例如：26个字母大小写配对游戏">
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">原始提示词 (Prompt)</label>
+                        <textarea class="w-full border border-gray-300 rounded-lg px-3 py-2 h-24" placeholder="输入发送给AI的完整提示词..."></textarea>
+                    </div>
+
+                    <div class="border-t border-gray-100 pt-6">
+                        <label class="block text-sm font-bold text-gray-800 mb-4">产物链接配置 (HTML URL)</label>
+                        
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-6 gap-4 text-xs font-bold text-gray-500 uppercase">
+                                <div class="col-span-2">模型名称</div>
+                                <div class="col-span-2">第1次生成结果 (V1)</div>
+                                <div class="col-span-2">第5次生成结果 (V5)</div>
+                            </div>
+
+                            <div class="grid grid-cols-6 gap-4 items-center bg-blue-50 p-2 rounded border border-blue-100">
+                                <div class="col-span-2 font-bold text-blue-700">🚀 我们的产品 (My Product)</div>
+                                <div class="col-span-2"><input type="text" class="w-full text-xs border border-gray-300 rounded px-2 py-1" placeholder="https://..."></div>
+                                <div class="col-span-2"><input type="text" class="w-full text-xs border border-gray-300 rounded px-2 py-1" placeholder="https://..."></div>
+                            </div>
+
+                            <div class="grid grid-cols-6 gap-4 items-center">
+                                <div class="col-span-2 text-gray-700">Gemini 3 Pro</div>
+                                <div class="col-span-2"><input type="text" class="w-full text-xs border border-gray-300 rounded px-2 py-1" placeholder="URL V1"></div>
+                                <div class="col-span-2"><input type="text" class="w-full text-xs border border-gray-300 rounded px-2 py-1" placeholder="URL V5"></div>
+                            </div>
+                            
+                            <div class="grid grid-cols-6 gap-4 items-center">
+                                <div class="col-span-2 text-gray-700">Kimi 2.5</div>
+                                <div class="col-span-2"><input type="text" class="w-full text-xs border border-gray-300 rounded px-2 py-1" placeholder="URL V1"></div>
+                                <div class="col-span-2"><input type="text" class="w-full text-xs border border-gray-300 rounded px-2 py-1" placeholder="URL V5"></div>
+                            </div>
+
+                            <div class="grid grid-cols-6 gap-4 items-center">
+                                <div class="col-span-2 text-gray-700">猿辅导 (飞象老师)</div>
+                                <div class="col-span-2"><input type="text" class="w-full text-xs border border-gray-300 rounded px-2 py-1" placeholder="URL V1"></div>
+                                <div class="col-span-2"><input type="text" class="w-full text-xs border border-gray-300 rounded px-2 py-1" placeholder="URL V5"></div>
+                            </div>
+
+                             <div class="grid grid-cols-6 gap-4 items-center">
+                                <div class="col-span-2 text-gray-700">好未来 (老师帮)</div>
+                                <div class="col-span-2"><input type="text" class="w-full text-xs border border-gray-300 rounded px-2 py-1" placeholder="URL V1"></div>
+                                <div class="col-span-2"><input type="text" class="w-full text-xs border border-gray-300 rounded px-2 py-1" placeholder="URL V5"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex justify-end">
+                        <button class="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg mr-3 hover:bg-gray-200">取消</button>
+                        <button onclick="alert('任务发布成功！教研端可见。')" class="px-8 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-lg">
+                            发布任务
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-admin-stats" class="hidden space-y-6">
+                
+                <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+                    <div class="absolute right-0 top-0 opacity-10 text-9xl transform translate-x-10 -translate-y-10">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">💡 智能迭代建议 (基于当前英语学科数据)</h3>
+                    <div class="space-y-2 text-sm bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+                        <p>1. <span class="font-bold text-yellow-300">优势：</span> 我们的产品在“视觉呈现”上均分 4.2，略高于 Gemini 3 Pro (3.8)，这得益于预置的皮肤包。</p>
+                        <p>2. <span class="font-bold text-red-300">劣势：</span> 在“交互逻辑”上，我们 V1 版本Bug率较高，落后于飞象老师。</p>
+                        <p>3. <span class="font-bold text-green-300">机会：</span> V1到V5的提分幅度我们最大 (+1.5分)，说明Prompt优化策略有效，建议继续强化提示词工程。</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h4 class="text-gray-800 font-bold mb-4">核心能力维度对比 (V5最终版)</h4>
+                        <div class="h-64">
+                            <canvas id="chartRadar"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h4 class="text-gray-800 font-bold mb-4">迭代潜力分析 (V1 vs V5 分数涨幅)</h4>
+                        <div class="h-64">
+                            <canvas id="chartBar"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 font-bold text-gray-800">学科平均分统计</div>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-500">
+                            <tr>
+                                <th class="px-6 py-3">模型</th>
+                                <th class="px-6 py-3">指令遵循</th>
+                                <th class="px-6 py-3">视觉美观</th>
+                                <th class="px-6 py-3">交互逻辑</th>
+                                <th class="px-6 py-3">教学适配</th>
+                                <th class="px-6 py-3 font-bold text-blue-600">综合得分</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr class="hover:bg-blue-50">
+                                <td class="px-6 py-3 font-bold text-blue-600">Our Product</td>
+                                <td class="px-6 py-3">4.2</td>
+                                <td class="px-6 py-3">4.5</td>
+                                <td class="px-6 py-3">3.8</td>
+                                <td class="px-6 py-3">4.1</td>
+                                <td class="px-6 py-3 font-bold">4.15</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3">猿辅导飞象</td>
+                                <td class="px-6 py-3">4.5</td>
+                                <td class="px-6 py-3">3.5</td>
+                                <td class="px-6 py-3">4.6</td>
+                                <td class="px-6 py-3">4.4</td>
+                                <td class="px-6 py-3 font-bold">4.25</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3">Gemini 3 Pro</td>
+                                <td class="px-6 py-3">4.0</td>
+                                <td class="px-6 py-3">3.2</td>
+                                <td class="px-6 py-3">3.5</td>
+                                <td class="px-6 py-3">3.0</td>
+                                <td class="px-6 py-3 font-bold">3.42</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center modal-enter">
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-96 max-w-full mx-4">
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">管理员登录</h3>
+                <p class="text-sm text-gray-500 mt-1">请验证身份以进入管理后台</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">账号</label>
+                    <input type="text" id="login-user" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="请输入管理员账号">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">密码</label>
+                    <input type="password" id="login-pass" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="请输入密码">
+                </div>
+                <div id="login-error" class="text-red-500 text-xs hidden text-center">账号或密码错误，请重试</div>
+                
+                <button onclick="performLogin()" class="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transition transform hover:-translate-y-0.5">
+                    立即登录
+                </button>
+                <button onclick="closeLoginModal()" class="w-full py-2 text-gray-500 text-sm hover:text-gray-700">
+                    取消
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === MOCK DATA ===
+        const tasks = [
+            {
+                id: 1,
+                title: "26个字母大小写配对游戏",
+                subject: "英语",
+                prompt: "设计一个交互H5，左边是乱序的大写字母，右边是小写，拖拽匹配，配对成功消除...",
+                status: "pending", // pending or done
+                models: [
+                    { name: "Our Product", v1: "#", v5: "#", isOwn: true },
+                    { name: "Gemini 3 Pro", v1: "#", v5: "#", isOwn: false },
+                    { name: "Kimi 2.5", v1: "#", v5: "#", isOwn: false },
+                    { name: "猿辅导飞象", v1: "#", v5: "#", isOwn: false },
+                    { name: "好未来老师帮", v1: "#", v5: "#", isOwn: false }
+                ]
+            },
+            {
+                id: 2,
+                title: "小学三年级分数认知动画",
+                subject: "数学",
+                prompt: "演示一个切披萨的动画，展示1/2, 1/4的概念...",
+                status: "pending",
+                models: [] // omitted for brevity
+            }
+        ];
+
+        const dimensions = [
+            { id: "d1", label: "指令遵循度 (Compliance)" },
+            { id: "d2", label: "视觉美观度 (Visual)" },
+            { id: "d3", label: "交互流畅度 (Interaction)" },
+            { id: "d4", label: "教学适配性 (Pedagogy)" }
+        ];
+
+        // === AUTH CONFIG ===
+        const AUTH = {
+            user: "Jolin0223",
+            pass: "fighting2026"
+        };
+        let isAdminLoggedIn = false;
+        let targetAdminView = '';
+
+        // === NAVIGATION LOGIC ===
+        function switchView(viewName) {
+            // Hide all views
+            document.getElementById('view-teacher').classList.add('hidden');
+            document.getElementById('view-admin-task').classList.add('hidden');
+            document.getElementById('view-admin-stats').classList.add('hidden');
+            
+            // Show selected
+            document.getElementById('view-' + viewName).classList.remove('hidden');
+            
+            // Update Title
+            const titles = {
+                'teacher': '互动课件效果评测',
+                'admin-task': '任务管理中心',
+                'admin-stats': '数据洞察看板'
+            };
+            document.getElementById('page-title').innerText = titles[viewName];
+
+            // Render logic
+            if(viewName === 'teacher') renderTeacherList();
+            if(viewName === 'admin-stats') renderCharts();
+        }
+
+        // === AUTH LOGIC ===
+        function attemptAdminAccess(viewName) {
+            if (isAdminLoggedIn) {
+                switchView(viewName);
+            } else {
+                targetAdminView = viewName;
+                document.getElementById('login-user').value = '';
+                document.getElementById('login-pass').value = '';
+                document.getElementById('login-error').classList.add('hidden');
+                document.getElementById('login-modal').classList.remove('hidden');
+            }
+        }
+
+        function closeLoginModal() {
+            document.getElementById('login-modal').classList.add('hidden');
+        }
+
+        function performLogin() {
+            const user = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-pass').value;
+            
+            if (user === AUTH.user && pass === AUTH.pass) {
+                isAdminLoggedIn = true;
+                closeLoginModal();
+                switchView(targetAdminView);
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+
+        // === TEACHER PORTAL LOGIC ===
+        let currentTab = 'pending';
+
+        function switchTeacherTab(tab) {
+            currentTab = tab;
+            const btnPending = document.getElementById('tab-pending');
+            const btnDone = document.getElementById('tab-done');
+            
+            if (tab === 'pending') {
+                btnPending.className = "px-6 py-2 rounded-md text-sm font-medium bg-blue-100 text-blue-700 transition";
+                btnDone.className = "px-6 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 transition";
+            } else {
+                btnDone.className = "px-6 py-2 rounded-md text-sm font-medium bg-blue-100 text-blue-700 transition";
+                btnPending.className = "px-6 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 transition";
+            }
+            renderTeacherList();
+        }
+
+        function renderTeacherList() {
+            const container = document.getElementById('task-list-container');
+            container.innerHTML = '';
+
+            // Filter logic (mock)
+            const filteredTasks = tasks.filter(t => t.status === currentTab);
+
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `<div class="text-center py-20 text-gray-400">暂无${currentTab === 'pending' ? '待处理' : '已完成'}任务</div>`;
+                return;
+            }
+
+            filteredTasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl shadow border border-gray-200 overflow-hidden";
+                
+                let modelRows = '';
+                task.models.forEach(model => {
+                    const highlightClass = model.isOwn ? "bg-blue-50 border-blue-100" : "border-gray-50";
+                    const nameClass = model.isOwn ? "text-blue-700 font-bold" : "text-gray-700 font-medium";
+                    
+                    modelRows += `
+                        <div class="grid grid-cols-12 gap-4 p-4 border-b border-gray-100 ${highlightClass} last:border-0 items-start">
+                            <div class="col-span-2 pt-2">
+                                <div class="${nameClass}">${model.name}</div>
+                                ${model.isOwn ? '<span class="text-xs bg-blue-600 text-white px-2 py-0.5 rounded">Me</span>' : ''}
+                            </div>
+                            
+                            <div class="col-span-4 border-r border-gray-200 pr-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-bold text-gray-400">V1 (初版)</span>
+                                    <a href="${model.v1}" target="_blank" class="text-xs text-blue-600 hover:underline"><i class="fa-solid fa-external-link-alt"></i> 查看效果</a>
+                                </div>
+                                <div class="bg-gray-50 p-2 rounded text-xs space-y-2">
+                                    ${dimensions.map(d => `
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-gray-500">${d.label}</span>
+                                            <input type="range" min="1" max="5" value="3" class="w-20 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <div class="col-span-4 border-r border-gray-200 pr-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-bold text-green-600">V5 (终版)</span>
+                                    <a href="${model.v5}" target="_blank" class="text-xs text-blue-600 hover:underline"><i class="fa-solid fa-external-link-alt"></i> 查看效果</a>
+                                </div>
+                                <div class="bg-gray-50 p-2 rounded text-xs space-y-2">
+                                    ${dimensions.map(d => `
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-gray-500">${d.label}</span>
+                                            <input type="range" min="1" max="5" value="4" class="w-20 h-1 bg-green-100 rounded-lg appearance-none cursor-pointer accent-green-600">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <div class="col-span-2 flex flex-col justify-center h-full pt-8">
+                                <div class="text-center">
+                                    <span class="block text-xs text-gray-400 mb-1">V5进步幅度</span>
+                                    <span class="text-lg font-bold text-green-500">+1.5</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center space-x-3 mb-1">
+                                <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold">${task.subject}</span>
+                                <h3 class="text-lg font-bold text-gray-800">${task.title}</h3>
+                            </div>
+                            <p class="text-sm text-gray-500 line-clamp-1 w-3/4"><span class="font-bold">Prompt:</span> ${task.prompt}</p>
+                        </div>
+                        ${currentTab === 'pending' ? 
+                        `<button onclick="alert('提交成功！数据已录入后台。'); this.closest('.bg-white').remove()" class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow hover:bg-blue-700 transition">
+                            <i class="fa-solid fa-check mr-2"></i> 提交评分
+                        </button>` : 
+                        `<span class="text-green-600 font-bold text-sm"><i class="fa-solid fa-circle-check"></i> 已处理</span>`}
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        ${modelRows}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // === ADMIN CHARTS LOGIC ===
+        let chartsInitialized = false;
+        
+        function renderCharts() {
+            if (chartsInitialized) return;
+            
+            // 1. Radar Chart (Comparison)
+            const ctxRadar = document.getElementById('chartRadar').getContext('2d');
+            new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: ['指令遵循', '视觉美观', '交互逻辑', '教学适配', '代码质量'],
+                    datasets: [{
+                        label: 'Our Product',
+                        data: [4.2, 4.5, 3.8, 4.1, 3.9],
+                        fill: true,
+                        backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                        borderColor: 'rgb(37, 99, 235)',
+                        pointBackgroundColor: 'rgb(37, 99, 235)',
+                    }, {
+                        label: '飞象老师',
+                        data: [4.5, 3.5, 4.6, 4.4, 4.2],
+                        fill: true,
+                        backgroundColor: 'rgba(234, 88, 12, 0.2)',
+                        borderColor: 'rgb(234, 88, 12)',
+                        pointBackgroundColor: 'rgb(234, 88, 12)',
+                    }]
+                },
+                options: {
+                    scales: { r: { min: 0, max: 5 } }
+                }
+            });
+
+            // 2. Bar Chart (Iteration Power)
+            const ctxBar = document.getElementById('chartBar').getContext('2d');
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Our Product', 'Gemini', 'Kimi', '飞象', '老师帮'],
+                    datasets: [
+                        {
+                            label: 'V1 初始分',
+                            data: [3.0, 3.2, 3.5, 3.8, 3.6],
+                            backgroundColor: '#9CA3AF'
+                        },
+                        {
+                            label: 'V5 最终分',
+                            data: [4.5, 3.8, 4.0, 4.2, 3.9],
+                            backgroundColor: '#2563EB'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: false, min: 2 } }
+                }
+            });
+
+            chartsInitialized = true;
+        }
+
+        // Init
+        renderTeacherList();
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+[
+  {
+    "id": "1ed339a6-7a29-42cc-9a6f-814bf780eff8",
+    "title": "泡泡配对-互动题板",
+    "description": "拒绝写 5000 字的交互文档。利用模型生成高保真可交互原型，无需自己想细节复杂的交互，体验调整demo，基于最终效果html自动生成详细PRD文档",
+    "imageUrl": "/uploads/1770888936886-_____1x__2_.png",
+    "projectUrl": "/uploads/1770888936938-peidui_bundled.html",
+    "tags": [
+      "⏱️ 2.5h 构建",
+      "🤖 Gemini 3 Pro"
+    ],
+    "prdUrl": "https://alidocs.dingtalk.com/i/nodes/QG53mjyd80RjzmmdfvDNXryzV6zbX04v",
+    "category": "业务实战",
+    "categories": [
+      "业务实战"
+    ],
+    "sortOrder": 3,
+    "views": 1,
+    "createdAt": "2026-02-12T09:35:37.031Z"
+  },
+  {
+    "id": "6eb86fcb-8d35-43ec-8c40-27367e023607",
+    "title": "键盘输入/拖拽型填空题",
+    "description": "拒绝写 5000 字的交互文档。利用模型生成高保真可交互原型，无需自己想细节复杂的交互，体验调整demo，基于最终效果html自动生成详细PRD文档",
+    "imageUrl": "/uploads/1770871632652-___419_1x.png",
+    "projectUrl": "/uploads/1770871632880-fillblank_final_result_v2.html",
+    "tags": [
+      "⏱️ 2.5h 构建",
+      "🤖 Gemini 3 Pro"
+    ],
+    "prdUrl": "https://alidocs.dingtalk.com/i/nodes/gwva2dxOW4KpnOOdU41pMoKA8bkz3BRL",
+    "category": "业务实战",
+    "categories": [
+      "业务实战"
+    ],
+    "sortOrder": 8,
+    "views": 0,
+    "createdAt": "2026-02-12T04:47:12.953Z"
+  },
+  {
+    "id": "e6029ddf-cfa1-462f-9c6b-eebc8a344e1e",
+    "title": "实用工具-HTML转SVG",
+    "description": "vibe Coding 工作流补完计划：自研中间件工具，解决 AI 生成代码与设计工具（MasterGo）之间的格式断层，打通‘代码→设计稿’的逆向编辑链路",
+    "imageUrl": "/uploads/1770794598087-s3IKb4Qj-2600008999-AigcImage-17b8d4d78e834fe99bbc13105829d735_0.png",
+    "projectUrl": "/uploads/1770794598147-tools.html",
+    "tags": [
+      "⏱️1h 构建",
+      "🤖 Gemini 3 Pro"
+    ],
+    "prdUrl": "",
+    "category": "全部作品",
+    "categories": [
+      "全部作品",
+      "效能工具"
+    ],
+    "sortOrder": 9,
+    "views": 2,
+    "createdAt": "2026-02-11T07:23:18.243Z"
+  },
+  {
+    "id": "df2dbddf-2861-437e-a956-7ad829524a31",
+    "title": "竞品AI教学动画数据监控看板",
+    "description": "定时爬取飞象老师&好未来老师帮 各学科年级下AI教学动画生产和消费情况，辅助自身产品迭代",
+    "imageUrl": "/uploads/1770793755487-__3650_1x.png",
+    "projectUrl": "/uploads/1770875714510-dashboard_standalone.html",
+    "tags": [
+      "⏱️4h 构建",
+      "🤖 Gemini 3 Pro"
+    ],
+    "prdUrl": "",
+    "category": "创意实验",
+    "categories": [
+      "创意实验",
+      "全部作品"
+    ],
+    "sortOrder": 2,
+    "views": 5,
+    "createdAt": "2026-02-11T07:09:15.546Z"
+  },
+  {
+    "id": "ca7abac4-870b-43a0-97fe-7e64ad740acd",
+    "title": "排序/填空-互动题板",
+    "description": "快速生成排序题型互动题板，无需自己想细节复杂的交互，直接上手体验，做题不顺滑就提需求，基于最终效果html自动生成详细PRD文档",
+    "imageUrl": "/uploads/1770793097938-__1016_1x.png",
+    "projectUrl": "/uploads/1770798911195-index.html",
+    "tags": [
+      "⏱️1.5h 构建",
+      "🤖 Gemini 3 Pro"
+    ],
+    "prdUrl": "https://alidocs.dingtalk.com/i/nodes/ZX6GRezwJl7D1xxoHRkEgeXjVdqbropQ?&corpId=",
+    "category": "全部作品",
+    "categories": [
+      "全部作品",
+      "业务实战"
+    ],
+    "sortOrder": 5,
+    "views": 4,
+    "createdAt": "2026-02-11T06:58:18.095Z"
+  },
+  {
+    "id": "d0ed52ec-99ea-4319-b0c4-d0190719dcd3",
+    "title": "排序/填空-互动题板",
+    "description": "快速生成排序题型互动题板，无需自己想细节复杂的交互，直接上手体验，做题不顺滑就提需求，基于最终效果html自动生成详细PRD文档",
+    "imageUrl": "/uploads/1770789037426-__1176_1x__1_.png",
+    "projectUrl": "/uploads/1770789037482-index_standalone.html",
+    "tags": [
+      "⏱️ 2.5h 构建",
+      "🤖 Gemini 3 Pro"
+    ],
+    "prdUrl": "https://alidocs.dingtalk.com/i/nodes/vy20BglGWOeO1QQptY14PpOpJA7depqY",
+    "category": "全部作品",
+    "categories": [
+      "全部作品",
+      "业务实战"
+    ],
+    "sortOrder": 4,
+    "views": 3,
+    "createdAt": "2026-02-11T05:50:37.525Z"
+  },
+  {
+    "id": "2fdc90d7-12db-4f43-82b5-a0bcb4ada6ce",
+    "title": "单词配对-互动题板",
+    "description": "快速生成匹配题型互动题板，无需自己想细节复杂的交互，直接上手体验，做题不顺滑就提需求，基于最终效果html自动生成详细PRD文档",
+    "imageUrl": "/uploads/1770787330021-__1019_1x.png",
+    "projectUrl": "/uploads/1770787330036-word-image-match.html",
+    "tags": [
+      "⏱️ 1.5h 构建",
+      "🤖 Gemini 3 Pro"
+    ],
+    "prdUrl": "https://alidocs.dingtalk.com/i/nodes/QG53mjyd80RjzmmdfvDNXryzV6zbX04v?&corpId=",
+    "category": "全部作品",
+    "sortOrder": 6,
+    "views": 1,
+    "createdAt": "2026-02-11T05:22:10.058Z",
+    "categories": [
+      "全部作品",
+      "业务实战"
+    ]
+  },
+  {
+    "id": "0556a3d6-d4fc-4be4-b274-29e990770cfd",
+    "title": "AI互动资源生成效果测评",
+    "description": "大模型落地能力横评：构建标准化测试集，量化对比 Gemini 3 Pro、Kimi 2.5 、飞象老师、老师帮等模型在教育场景下的生成质量与稳定性，为产品优化提供数据支撑。",
+    "imageUrl": "/uploads/1770736366937-NkLGXPTf-2600008999-AigcImage-156f7c3277df4c2bbe50c7faa260de15_0.png",
+    "projectUrl": "/uploads/1770745198284-ceshi.html",
+    "tags": [
+      "⏱️ 2.5h 构建",
+      "🤖 Gemini 3 Pro"
+    ],
+    "prdUrl": "",
+    "category": "全部作品",
+    "views": 6,
+    "createdAt": "2026-02-10T15:12:46.974Z",
+    "categories": [
+      "全部作品",
+      "创意实验"
+    ],
+    "sortOrder": 1
+  },
+  {
+    "id": "a4d0c74f-c558-446f-a0a5-4530594d99ae",
+    "title": "互动资源智能生产",
+    "description": "【目标】快速实现教师一句话就生成互动课件的产品想法，便于开发实现和项目汇报\n",
+    "imageUrl": "/uploads/1770736147199-PmJi4Q3w-2600008999-AigcImage-f044b17b5c1e452383ebaeac49ceaaba_0.png",
+    "projectUrl": "https://s6opd2vlfjm3k.ok.kimi.link/",
+    "tags": [
+      "⏱️ 4h 构建",
+      "🤖 kimi 2.5"
+    ],
+    "prdUrl": "https://alidocs.dingtalk.com/i/spaces/BpLmk4Nx4JRkPG2g/overview",
+    "category": "全部作品",
+    "views": 4,
+    "createdAt": "2026-02-10T14:58:58.709Z",
+    "categories": [
+      "全部作品",
+      "创意实验"
+    ],
+    "sortOrder": 0
+  },
+  {
+    "id": "f019d85e-c8a2-4d30-b909-ce79cad1ff28",
+    "title": "归类-互动题板",
+    "description": "拒绝写 5000 字的交互文档。利用模型生成高保真可交互原型，无需自己想细节复杂的交互，体验调整demo，基于最终效果html自动生成详细PRD文档",
+    "imageUrl": "/uploads/1770788097798-__1178_1x.png",
+    "projectUrl": "/uploads/1770704943335-ai_guilei_question_bundled.html",
+    "views": 8,
+    "createdAt": "2026-02-10T06:29:03.356Z",
+    "tags": [
+      "⏱️ 2.5h 构建",
+      "🤖 Gemini 3 Pro"
+    ],
+    "prdUrl": "https://alidocs.dingtalk.com/i/nodes/QG53mjyd80RjzmmdfvDNXryzV6zbX04v?&corpId=",
+    "category": "全部作品",
+    "categories": [
+      "全部作品",
+      "业务实战"
+    ],
+    "sortOrder": 10
+  }
+]

@@ -1,0 +1,80 @@
+<svg width="1000" height="180" viewBox="0 0 1000 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="cardLightGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="#F1F5F9" stop-opacity="0.9"/>
+        </linearGradient>
+        <linearGradient id="arrowFlowGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#93C5FD"/> <stop offset="100%" stop-color="#3B82F6"/> </linearGradient>
+        <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#3B82F6" flood-opacity="0.12"/>
+        </filter>
+        <filter id="iconGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+        </filter>
+        <marker id="arrowheadBlue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <polygon points="0 0, 10 4, 0 8" fill="url(#arrowFlowGradient)" />
+        </marker>
+    </defs>
+
+    <style>
+        .step-card { fill: url(#cardLightGradient); stroke: #FFFFFF; stroke-width: 1.5; rx: 16; filter: url(#softShadow); }
+        .step-title { font-family: 'PingFang SC', sans-serif; font-size: 15px; fill: #1E293B; font-weight: 700; text-anchor: middle; }
+        .step-subtitle { font-family: 'Arial', sans-serif; font-size: 12px; fill: #64748B; text-anchor: middle; }
+        .connector-arrow { stroke: url(#arrowFlowGradient); stroke-width: 3; marker-end: url(#arrowheadBlue); stroke-linecap: round; }
+        .icon-circle { fill: #EFF6FF; } /* 浅蓝底色 */
+        .step-icon { fill: #3B82F6; filter: url(#iconGlow); } /* 蓝色图标带发光 */
+    </style>
+
+    <g transform="translate(20, 30)">
+        <rect width="160" height="110" class="step-card"/>
+        <circle cx="80" cy="40" r="24" class="icon-circle"/>
+        <path class="step-icon" transform="translate(68, 28) scale(0.6)" d="M12,2A10,10 0 0,0 2,12C2,14.4 2.85,16.6 4.26,18.33L2.85,19.74L4.26,21.15L5.67,19.74C7.4,21.15 9.6,22 12,22A10,10 0 0,0 22,12C22,6.48 17.52,2 12,2M12,20C8.13,20 5,16.87 5,13C5,12.23 5.11,11.47 5.33,10.77C5.34,10.71 5.37,10.66 5.38,10.6C6.1,8.2 8.14,6.3 10.7,5.5C11.13,5.36 11.56,5.27 12,5.22V5C12,4.45 11.55,4 11,4C10.45,4 10,4.45 10,5H8C8,3.34 9.34,2 11,2C12.66,2 14,3.34 14,5H12V5.22C12.44,5.27 12.87,5.36 13.3,5.5C15.86,6.3 17.9,8.2 18.62,10.6C18.63,10.66 18.66,10.71 18.67,10.77C18.89,11.47 19,12.23 19,13C19,16.87 15.87,20 12,20M14,13H16C16,15.21 14.21,17 12,17V15C13.1,15 14,14.1 14,13M10,13H12V15C9.79,15 8,13.21 8,11H10C10,12.1 10.9,13 12,13Z" />
+        <text x="80" y="80" class="step-title">1. 灵感</text>
+        <text x="80" y="98" class="step-subtitle">(Inspiration)</text>
+    </g>
+
+    <path d="M195 85 H235" class="connector-arrow" />
+
+    <g transform="translate(250, 30)">
+        <rect width="160" height="110" class="step-card"/>
+        <circle cx="80" cy="40" r="24" class="icon-circle"/>
+        <path class="step-icon" transform="translate(68, 28) scale(0.6)" d="M20,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4M20,18H4V6H20V18M7.5,17L12.5,12L7.5,7V9.5L10,12L7.5,14.5V17M14,17H19V15H14V17Z" />
+        <text x="80" y="80" class="step-title">2. Vibe Coding</text>
+        <text x="80" y="98" class="step-subtitle">(HTML生成)</text>
+    </g>
+
+    <path d="M425 85 H465" class="connector-arrow" />
+
+    <g transform="translate(480, 30)">
+        <rect width="160" height="110" class="step-card"/>
+        <circle cx="80" cy="40" r="24" class="icon-circle"/>
+        <path class="step-icon" transform="translate(68, 28) scale(0.6)" d="M16.56,8.44L15.56,9.44C15.37,9.63 15.11,9.75 14.83,9.75C14.28,9.75 13.83,9.3 13.83,8.75C13.83,8.47 13.95,8.21 14.14,8.02L15.14,7.02L12,3.88L2,13.88V17H5.12L15.12,7L13.7,5.58L16.56,8.44M3,16V14.3L12,5.3L13.7,7L4.7,16H3M22,3H18V4H20V7H21V4H22V3M22,20H18V19H20V16H21V19H22V20M15.5,12C14.67,12 14,11.33 14,10.5C14,9.67 14.67,9 15.5,9C16.33,9 17,9.67 17,10.5C17,11.33 16.33,12 15.5,12Z" />
+        <text x="80" y="80" class="step-title">3. MasterGo 编辑</text>
+        <text x="80" y="98" class="step-subtitle">(HTML转SVG)</text>
+    </g>
+
+    <path d="M655 85 H695" class="connector-arrow" />
+
+    <g transform="translate(710, 30)">
+        <rect width="160" height="110" class="step-card"/>
+        <circle cx="80" cy="40" r="24" class="icon-circle"/>
+        <path class="step-icon" transform="translate(68, 28) scale(0.6)" d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2M12,6.5A2.5,2.5 0 0,0 9.5,9A2.5,2.5 0 0,0 12,11.5A2.5,2.5 0 0,0 14.5,9A2.5,2.5 0 0,0 12,6.5M12,5A4,4 0 0,1 16,9A4,4 0 0,1 12,13A4,4 0 0,1 8,9A4,4 0 0,1 12,5M19.5,13.59C19.6,13.36 19.68,13.13 19.73,12.89L21.22,12.64C21.35,12.61 21.44,12.5 21.47,12.37L21.9,10.94C21.94,10.81 21.88,10.68 21.77,10.61L20.54,9.68C20.56,9.45 20.56,9.22 20.54,9L21.77,8.06C21.88,7.97 21.94,7.84 21.9,7.71L21.47,6.28C21.44,6.15 21.35,6.04 21.22,6.03L19.73,5.77C19.68,5.54 19.6,5.3 19.5,5.08L20.23,3.8C20.3,3.68 20.28,3.53 20.18,3.43L19.16,2.41C19.06,2.31 18.91,2.29 18.79,2.36L17.5,3.08C17.29,3 17.07,2.92 16.84,2.86L16.59,1.37C16.57,1.23 16.46,1.12 16.32,1.1L14.83,0.67C14.7,0.64 14.56,0.7 14.47,0.81L13.54,2.04C13.32,2.03 13.09,2.03 12.87,2.04L11.94,0.81C11.85,0.7 11.71,0.64 11.58,0.67L10.09,1.1C9.95,1.12 9.84,1.23 9.82,1.37L9.57,2.86C9.34,2.92 9.12,3 8.91,3.08L7.62,2.36C7.5,2.29 7.35,2.31 7.25,2.41L6.23,3.43C6.13,3.53 6.11,3.68 6.18,3.8L6.91,5.08C6.81,5.3 6.73,5.54 6.68,5.77L5.19,6.03C5.06,6.04 4.97,6.15 4.94,6.28L4.5,7.71C4.47,7.84 4.53,7.97 4.64,8.06L5.87,9C5.85,9.22 5.85,9.45 5.87,9.68L4.64,10.61C4.53,10.68 4.47,10.81 4.5,10.94L4.94,12.37C4.97,12.5 5.06,12.61 5.19,12.64L6.68,12.89C6.73,13.13 6.81,13.36 6.91,13.59L6.18,14.87C6.11,14.99 6.13,15.14 6.23,15.24L7.25,16.26C7.35,16.36 7.5,16.38 7.62,16.31L8.91,15.59C9.12,15.65 9.34,15.73 9.57,15.79L9.82,17.28C9.84,17.42 9.95,17.53 10.09,17.55L11.58,17.98C11.71,18.01 11.85,17.96 11.94,17.85L12.87,16.62C13.09,16.63 13.32,16.63 13.54,16.62L14.47,17.85C14.56,17.96 14.7,18.01 14.83,17.98L16.32,17.55C16.46,17.53 16.57,17.42 16.59,17.28L16.84,15.79C17.07,15.73 17.29,15.65 17.5,15.59L18.79,16.31C18.91,16.38 19.06,16.36 19.16,16.26L20.18,15.24C20.28,15.14 20.3,14.99 20.23,14.87L19.5,13.59M13.2,9.33C13.2,10 12.67,10.53 12,10.53C11.33,10.53 10.8,10 10.8,9.33C10.8,8.67 11.33,8.13 12,8.13C12.67,8.13 13.2,8.67 13.2,9.33Z" />
+        <text x="80" y="80" class="step-title">4. 调整 Demo</text>
+        <text x="80" y="98" class="step-subtitle">(原型输入验证)</text>
+    </g>
+
+    <path d="M885 85 H925" class="connector-arrow" />
+
+    <g transform="translate(940, 30)">
+        <rect width="160" height="110" class="step-card" style="stroke: #3B82F6; stroke-width: 2;"/>
+        <circle cx="80" cy="40" r="24" class="icon-circle"/>
+        <path class="step-icon" transform="translate(68, 28) scale(0.6)" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M11.24,16.38L8.58,13.73L10,12.31L11.24,13.55L14.76,10.03L16.17,11.44L11.24,16.38Z" />
+        <text x="80" y="80" class="step-title" style="fill:#3B82F6">5. 生成 PRD</text>
+        <text x="80" y="98" class="step-subtitle">(Documentation)</text>
+    </g>
+</svg>
