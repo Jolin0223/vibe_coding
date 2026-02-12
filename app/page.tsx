@@ -7,6 +7,9 @@ import { Eye, Zap } from "lucide-react";
 import ProjectCard from "@/components/ProjectCard";
 import ProcessFlow from "@/components/ProcessFlow";
 
+// 核心改动1：直接导入本地JSON文件（替换API请求）
+import initialProjects from '@/data/projects.json';
+
 // Define Project Type
 type Project = {
   id: string;
@@ -28,29 +31,32 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState("全部作品");
   const [loading, setLoading] = useState(true);
 
+  // 核心改动2：替换API请求为读取本地JSON
   useEffect(() => {
-    const fetchProjects = async () => {
+    const loadLocalProjects = async () => {
       try {
-        const res = await fetch('/api/projects');
-        const data = await res.json();
-        if (Array.isArray(data)) {
-            setProjects(data);
-            setFilteredProjects(data);
+        // 直接使用导入的本地JSON数据
+        if (Array.isArray(initialProjects)) {
+          setProjects(initialProjects);
+          setFilteredProjects(initialProjects);
         } else {
-            console.error("API returned non-array:", data);
-            setProjects([]);
-            setFilteredProjects([]);
+          console.error("JSON文件格式错误，不是数组:", initialProjects);
+          setProjects([]);
+          setFilteredProjects([]);
         }
       } catch (error) {
-        console.error("Failed to fetch projects", error);
+        console.error("加载本地作品数据失败", error);
+        setProjects([]);
+        setFilteredProjects([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProjects();
+    loadLocalProjects();
   }, []);
 
+  // 保留原有分类过滤逻辑（无需改动）
   useEffect(() => {
     if (activeCategory === "全部作品") {
       setFilteredProjects(projects);
