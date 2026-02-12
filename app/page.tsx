@@ -85,9 +85,10 @@ export default function Home() {
     }
   }, [activeCategory, projects]);
 
-  // 新增：显示toast的函数
+  // 新增：显示toast的函数（彻底阻断跳转）
   const showAdminToast = (e: React.MouseEvent) => {
-    e.preventDefault(); // 阻止默认跳转行为
+    e.preventDefault(); // 阻止默认跳转（关键）
+    e.stopPropagation(); // 阻止事件冒泡（关键）
     setShowToast(true);
     // 3秒后自动隐藏toast
     setTimeout(() => setShowToast(false), 3000);
@@ -112,14 +113,14 @@ export default function Home() {
 
   return (
     <main className="min-h-screen relative flex flex-col font-sans text-slate-900 selection:bg-purple-200">
-      {/* 新增：好看的Toast提示框 */}
+      {/* 新增：好看的Toast提示框（优先级最高，样式优化） */}
       {showToast && (
-        <div className="fixed top-8 right-8 z-50 bg-gradient-to-r from-[#5B86FF] to-[#2D9CFF] text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in-up">
-          <span className="font-medium">仅陈佳玲可访问哦~</span>
+        <div className="fixed top-8 right-8 z-50 bg-gradient-to-r from-[#5B86FF] to-[#2D9CFF] text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in-up transition-all duration-300">
+          <span className="font-medium">仅陈佳玲可访问哦～</span>
         </div>
       )}
 
-      {/* 新增：Toast动画样式 */}
+      {/* 新增：Toast动画样式（全局生效） */}
       <style jsx global>{`
         @keyframes fade-in-up {
           0% {
@@ -133,6 +134,15 @@ export default function Home() {
         }
         .animate-fade-in-up {
           animation: fade-in-up 0.3s ease-out forwards;
+        }
+        /* 确保按钮无跳转样式 */
+        .admin-btn {
+          cursor: pointer;
+          background: none;
+          border: none;
+          padding: 0;
+          font: inherit;
+          color: inherit;
         }
       `}</style>
 
@@ -153,10 +163,11 @@ export default function Home() {
             </div>
             
             <div className="flex items-center gap-6 text-[14px] font-medium text-[#465467]">
-                 {/* 修改：替换Link为普通按钮，添加点击事件 */}
+                 {/* 彻底修改：移除Link标签，改用纯按钮，无任何跳转属性 */}
                  <button
                     onClick={showAdminToast}
-                    className="hover:text-blue-600 transition-colors cursor-pointer"
+                    className="admin-btn hover:text-blue-600 transition-colors"
+                    type="button" // 明确按钮类型，避免表单提交
                  >
                     管理后台
                  </button>
