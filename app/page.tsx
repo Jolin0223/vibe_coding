@@ -31,6 +31,8 @@ export default function Home() {
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [activeCategory, setActiveCategory] = useState("全部作品");
   const [loading, setLoading] = useState(true);
+  // 新增：toast相关状态
+  const [showToast, setShowToast] = useState(false);
 
   // 核心改动2：替换API请求为读取本地JSON + 按sortOrder排序
   useEffect(() => {
@@ -83,6 +85,14 @@ export default function Home() {
     }
   }, [activeCategory, projects]);
 
+  // 新增：显示toast的函数
+  const showAdminToast = (e: React.MouseEvent) => {
+    e.preventDefault(); // 阻止默认跳转行为
+    setShowToast(true);
+    // 3秒后自动隐藏toast
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
   const defaultCategories = ["全部作品"];
   // Collect all unique categories from projects
   const projectCategories = Array.from(new Set(projects.flatMap(p => p.categories || (p.category ? [p.category] : [])).filter(Boolean)));
@@ -102,6 +112,30 @@ export default function Home() {
 
   return (
     <main className="min-h-screen relative flex flex-col font-sans text-slate-900 selection:bg-purple-200">
+      {/* 新增：好看的Toast提示框 */}
+      {showToast && (
+        <div className="fixed top-8 right-8 z-50 bg-gradient-to-r from-[#5B86FF] to-[#2D9CFF] text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in-up">
+          <span className="font-medium">仅陈佳玲可访问哦~</span>
+        </div>
+      )}
+
+      {/* 新增：Toast动画样式 */}
+      <style jsx global>{`
+        @keyframes fade-in-up {
+          0% {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.3s ease-out forwards;
+        }
+      `}</style>
+
       {/* Background Image Layer */}
       <div className="fixed inset-0 z-0">
          {/* CSS Gradient Background as requested */}
@@ -119,7 +153,13 @@ export default function Home() {
             </div>
             
             <div className="flex items-center gap-6 text-[14px] font-medium text-[#465467]">
-                 <Link href="/admin/login" target="_blank" className="hover:text-blue-600 transition-colors">管理后台</Link>
+                 {/* 修改：替换Link为普通按钮，添加点击事件 */}
+                 <button
+                    onClick={showAdminToast}
+                    className="hover:text-blue-600 transition-colors cursor-pointer"
+                 >
+                    管理后台
+                 </button>
                  <div className="h-4 w-px bg-[#A9ABAD]"></div>
                  <div className="flex items-center gap-[5px]">
                     <div className="w-[30px] h-[30px] rounded-full bg-slate-200 overflow-hidden relative border border-white shadow-sm">
