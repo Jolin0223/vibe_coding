@@ -142,7 +142,7 @@
     "title": "AI互动资源生成效果测评",
     "description": "大模型落地能力横评：构建标准化测试集，量化对比 Gemini 3 Pro、Kimi 2.5 、飞象老师、老师帮等模型在教育场景下的生成质量与稳定性，为产品优化提供数据支撑。",
     "imageUrl": "/uploads/1770736366937-NkLGXPTf-2600008999-AigcImage-156f7c3277df4c2bbe50c7faa260de15_0.png",
-    "projectUrl": "/uploads/1770745198284-ceshi.html",
+    "projectUrl": "https://coursewareeval.chenjialing.cn/",
     "tags": [
       "⏱️ 2.5h 构建",
       "🤖 Gemini 3 Pro"
