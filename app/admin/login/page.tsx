@@ -8,26 +8,36 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // 核心修改：移除API请求，改为纯前端专属账号密码校验
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    // 你的专属账号密码（只有这组能登录）
-    const YOUR_USERNAME = 'Jolin0223';
-    const YOUR_PASSWORD = 'fighting2026';
+    try {
+      // 核心修改：调用后端的 auth 接口，让后端来判断并种下安全的 Cookie
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-    // 校验逻辑
-    if (username === YOUR_USERNAME && password === YOUR_PASSWORD) {
-      // 登录成功：标记状态 + 跳转到后台仪表盘
-      localStorage.setItem('adminLoggedIn', 'true');
-      router.push('/admin/dashboard');
-    } else {
-      // 登录失败：提示错误，清空密码
-      setError('账号或密码错误，无访问权限！');
-      setPassword('');
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        // 登录成功，Cookie 已经种好，放心跳转！
+        router.push('/admin/dashboard');
+      } else {
+        // 登录失败
+        setError(data.message || '账号或密码错误，无访问权限！');
+        setPassword('');
+      }
+    } catch (err) {
+      setError('服务器请求失败，请稍后重试');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,9 +82,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition-colors"
+            disabled={loading}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition-colors disabled:opacity-50"
           >
-            Login
+            {loading ? 'Verifying...' : 'Login'}
           </button>
         </form>
       </div>
