@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { supabase } from '@/utils/supabase';
+
+const TABLE_NAME = 'jolin_vibecoding_projects';
 
 export async function POST(
   request: Request,
@@ -8,31 +9,34 @@ export async function POST(
 ) {
   try {
     const id = (await params).id;
-    const filePath = path.join(process.cwd(), 'data', 'projects.json');
     
-    // Read data
-    const fileContents = await fs.readFile(filePath, 'utf8');
-    const projects = JSON.parse(fileContents);
-    
-    // Find and update project
-    const projectIndex = projects.findIndex((p: any) => p.id === id);
-    
-    if (projectIndex === -1) {
-      return NextResponse.json({ success: false, message: 'Project not found' }, { status: 404 });
-    }
-    
-    // Increment views
-    projects[projectIndex].views = (projects[projectIndex].views || 0) + 1;
-    
-    // Write back
-    await fs.writeFile(filePath, JSON.stringify(projects, null, 2));
-    
+    // 1. 先查出当前的浏览量
+    const { data: project, error: fetchError } = await supabase
+      .from(TABLE_NAME)
+      .select('views')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const currentViews = project?.views || 0;
+
+    // 2. 将浏览量 +1 并更新回数据库，同时返回最新浏览量
+    const { data, error: updateError } = await supabase
+      .from(TABLE_NAME)
+      .update({ views: currentViews + 1 })
+      .eq('id', id)
+      .select('views')
+      .single();
+
+    if (updateError) throw updateError;
+
     return NextResponse.json({ 
       success: true, 
-      views: projects[projectIndex].views 
+      views: data.views 
     });
-  } catch (error) {
-    console.error('Error updating views:', error);
+  } catch (error: any) {
+    console.error("增加浏览量失败:", error);
     return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
   }
 }

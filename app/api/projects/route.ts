@@ -1,60 +1,48 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/utils/supabase'; // 确保你按之前的步骤建了这个文件
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'projects.json');
+const TABLE_NAME = 'jolin_vibecoding_projects';
+export const dynamic = 'force-dynamic';
 
-// Helper to read data
-async function getProjects() {
+// GET: 获取所有项目
+export async function GET() {
   try {
-    const data = await fs.readFile(DATA_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    return [];
+    const { data, error } = await supabase
+      .from(TABLE_NAME)
+      .select('*')
+      .order('sortOrder', { ascending: true })
+      .order('createdAt', { ascending: false });
+
+    if (error) throw error;
+    
+    return NextResponse.json(data || []);
+  } catch (error: any) {
+    console.error("获取项目失败:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// Helper to write data
-async function saveProjects(projects: any[]) {
-  await fs.writeFile(DATA_FILE, JSON.stringify(projects, null, 2));
-}
-
-export const dynamic = 'force-dynamic';
-
-export async function GET() {
-  const projects = await getProjects();
-  // Sort by sortOrder ASC
-  projects.sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  return NextResponse.json(projects);
-}
-
+// POST: 新增一个项目
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, description, imageUrl, projectUrl, tags, prdUrl, categories, sortOrder } = body;
+    
+    // 兼容原有的分类逻辑
+    if (!body.category && body.categories && body.categories.length > 0) {
+       body.category = body.categories[0];
+    }
+    if (!body.categories) body.categories = ['全部作品'];
+    
+    const { data, error } = await supabase
+      .from(TABLE_NAME)
+      .insert([body])
+      .select();
 
-    const projects = await getProjects();
-    const newProject = {
-      id: uuidv4(),
-      title,
-      description,
-      imageUrl: imageUrl || '',
-      projectUrl: projectUrl || '#',
-      tags: tags || [],
-      prdUrl: prdUrl || '',
-      category: (categories && categories[0]) || '全部作品', // Legacy support
-      categories: categories || ['全部作品'],
-      sortOrder: sortOrder || 0,
-      views: 0, 
-      createdAt: new Date().toISOString(),
-    };
-
-    projects.unshift(newProject);
-    await saveProjects(projects);
-
-    return NextResponse.json({ success: true, project: newProject });
-  } catch (error) {
-    return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+    if (error) throw error;
+    
+    return NextResponse.json({ success: true, project: data[0] });
+  } catch (error: any) {
+    console.error("新增项目失败:", error);
+    return NextResponse.json({ success: false, message: 'Server error', error: error.message }, { status: 500 });
   }
 }
