@@ -22,7 +22,7 @@ This is a Next.js application for showcasing Vibe Coding projects.
 
 -   **Login URL:** [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
 -   **Username:** `Jolin0223`
--   **Password:** `fighting2026`
+-   **Password:** ` `
 
 ## Deployment
 
