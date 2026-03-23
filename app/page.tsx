@@ -3,12 +3,9 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Eye, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import ProjectCard from "@/components/ProjectCard";
 import ProcessFlow from "@/components/ProcessFlow";
-
-// 核心改动1：直接导入本地JSON文件（替换API请求）
-import initialProjects from '@/data/projects.json';
 
 // Define Project Type
 type Project = {
@@ -23,7 +20,7 @@ type Project = {
   prdUrl?: string;
   category?: string;
   categories?: string[];
-  sortOrder?: number; // 显式声明sortOrder字段
+  sortOrder?: number;
 };
 
 export default function Home() {
@@ -31,30 +28,27 @@ export default function Home() {
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [activeCategory, setActiveCategory] = useState("全部作品");
   const [loading, setLoading] = useState(true);
-  // 新增：toast相关状态
-  const [showToast, setShowToast] = useState(false);
 
-  // 核心改动2：替换API请求为读取本地JSON + 按sortOrder排序
+  // 核心改动1：直接从你的 Supabase 后端 API 获取数据
   useEffect(() => {
-    const loadLocalProjects = async () => {
+    const fetchProjects = async () => {
       try {
-        // 直接使用导入的本地JSON数据，并按sortOrder从小到大排序
-        if (Array.isArray(initialProjects)) {
-          // 核心排序逻辑：sortOrder越小越靠前，无sortOrder则默认999排最后
-          const sortedProjects = initialProjects.sort((a, b) => {
-            const orderA = a.sortOrder ?? 999; // 兼容undefined的情况
-            const orderB = b.sortOrder ?? 999;
-            return orderA - orderB;
-          });
-          setProjects(sortedProjects);
-          setFilteredProjects(sortedProjects);
+        const response = await fetch('/api/projects');
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          // 后端已经排过序了，前端可以直接存入
+          setProjects(data);
+          setFilteredProjects(data);
         } else {
-          console.error("JSON文件格式错误，不是数组:", initialProjects);
           setProjects([]);
           setFilteredProjects([]);
         }
       } catch (error) {
-        console.error("加载本地作品数据失败", error);
+        console.error("加载作品数据失败", error);
         setProjects([]);
         setFilteredProjects([]);
       } finally {
@@ -62,37 +56,23 @@ export default function Home() {
       }
     };
 
-    loadLocalProjects();
+    fetchProjects();
   }, []);
 
-  // 核心改动3：分类过滤后也按sortOrder排序
+  // 分类过滤
   useEffect(() => {
     if (activeCategory === "全部作品") {
       setFilteredProjects(projects);
     } else {
-      // 过滤后仍保持sortOrder排序
       const filtered = projects.filter((p) => {
           if (p.categories && p.categories.length > 0) {
               return p.categories.includes(activeCategory);
           }
           return p.category === activeCategory;
-      }).sort((a, b) => { // 分类过滤后重新排序
-        const orderA = a.sortOrder ?? 999;
-        const orderB = b.sortOrder ?? 999;
-        return orderA - orderB;
       });
       setFilteredProjects(filtered);
     }
   }, [activeCategory, projects]);
-
-  // 新增：显示toast的函数（彻底阻断跳转）
-  const showAdminToast = (e: React.MouseEvent) => {
-    e.preventDefault(); // 阻止默认跳转（关键）
-    e.stopPropagation(); // 阻止事件冒泡（关键）
-    setShowToast(true);
-    // 3秒后自动隐藏toast
-    setTimeout(() => setShowToast(false), 3000);
-  };
 
   const defaultCategories = ["全部作品"];
   // Collect all unique categories from projects
@@ -113,38 +93,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen relative flex flex-col font-sans text-slate-900 selection:bg-purple-200">
-      {/* 新增：好看的Toast提示框（优先级最高，样式优化） */}
-      {showToast && (
-        <div className="fixed top-8 right-8 z-50 bg-gradient-to-r from-[#5B86FF] to-[#2D9CFF] text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in-up transition-all duration-300">
-          <span className="font-medium">仅陈佳玲可访问哦～</span>
-        </div>
-      )}
-
-      {/* 新增：Toast动画样式（全局生效） */}
-      <style jsx global>{`
-        @keyframes fade-in-up {
-          0% {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in-up {
-          animation: fade-in-up 0.3s ease-out forwards;
-        }
-        /* 确保按钮无跳转样式 */
-        .admin-btn {
-          cursor: pointer;
-          background: none;
-          border: none;
-          padding: 0;
-          font: inherit;
-          color: inherit;
-        }
-      `}</style>
 
       {/* Background Image Layer */}
       <div className="fixed inset-0 z-0">
@@ -163,14 +111,13 @@ export default function Home() {
             </div>
             
             <div className="flex items-center gap-6 text-[14px] font-medium text-[#465467]">
-                 {/* 彻底修改：移除Link标签，改用纯按钮，无任何跳转属性 */}
-                 <button
-                    onClick={showAdminToast}
-                    className="admin-btn hover:text-blue-600 transition-colors"
-                    type="button" // 明确按钮类型，避免表单提交
+                 {/* 核心改动2：恢复到真实的后台链接 */}
+                 <Link
+                    href="/admin/dashboard"
+                    className="hover:text-blue-600 transition-colors"
                  >
                     管理后台
-                 </button>
+                 </Link>
                  <div className="h-4 w-px bg-[#A9ABAD]"></div>
                  <div className="flex items-center gap-[5px]">
                     <div className="w-[30px] h-[30px] rounded-full bg-slate-200 overflow-hidden relative border border-white shadow-sm">
@@ -223,7 +170,7 @@ export default function Home() {
         <div className="min-h-[600px]">
             {loading ? (
                  <div className="col-span-full text-center py-20">
-                    <p className="text-slate-400">Loading projects...</p>
+                    <p className="text-slate-400">正在加载 AI 实验室数据...</p>
                  </div>
             ) : filteredProjects.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
