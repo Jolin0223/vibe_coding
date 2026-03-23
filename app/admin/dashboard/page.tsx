@@ -58,10 +58,12 @@ export default function Dashboard() {
   const fetchProjects = async () => {
     try {
       const res = await fetch('/api/projects');
+      if (!res.ok) throw new Error('Failed to fetch projects');
       const data = await res.json();
-      setProjects(data);
+      setProjects(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching projects:", err);
+      showToast('Error loading projects');
     } finally {
       setLoading(false);
     }
@@ -91,25 +93,51 @@ export default function Dashboard() {
   const handleEdit = (project: Project) => {
     setIsEditing(true);
     setCurrentId(project.id);
-    setTitle(project.title);
-    setDescription(project.description);
-    setTags(project.tags ? project.tags.join(', ') : '');
+    setTitle(project.title || '');
+    setDescription(project.description || '');
+    
+    // 安全处理 tags 数组
+    let safeTags = '';
+    if (Array.isArray(project.tags)) {
+        safeTags = project.tags.join(', ');
+    } else if (typeof project.tags === 'string') {
+        try {
+            const parsed = JSON.parse(project.tags);
+            safeTags = Array.isArray(parsed) ? parsed.join(', ') : project.tags;
+        } catch(e) {
+            safeTags = project.tags;
+        }
+    }
+    setTags(safeTags);
+    
     setPrdUrl(project.prdUrl || '');
-    // Handle categories backward compatibility
-    const cats = project.categories || (project.category ? [project.category] : []);
+    
+    // 安全处理 categories
+    let cats: string[] = [];
+    if (Array.isArray(project.categories)) {
+        cats = project.categories;
+    } else if (typeof project.categories === 'string') {
+        try {
+            cats = JSON.parse(project.categories);
+        } catch(e) {
+            cats = project.category ? [project.category] : [];
+        }
+    } else {
+        cats = project.category ? [project.category] : [];
+    }
+    
     setSelectedCategories(cats);
     setCategoryInput('');
     setSortOrder(project.sortOrder || 0);
-    setCurrentImageUrl(project.imageUrl);
-    setProjectUrl(project.projectUrl);
-    // Determine if URL is local file or external
-    if (project.projectUrl.startsWith('/uploads/')) {
+    setCurrentImageUrl(project.imageUrl || '');
+    setProjectUrl(project.projectUrl || '');
+    
+    if (project.projectUrl && project.projectUrl.startsWith('/uploads/')) {
         setProjectType('file');
     } else {
         setProjectType('url');
     }
     
-    // Scroll to form
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -120,11 +148,14 @@ export default function Dashboard() {
       const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
       if (res.ok) {
         fetchProjects();
+        showToast('Project deleted successfully');
       } else {
-        alert('Failed to delete project');
+        const err = await res.json();
+        showToast(`Failed to delete: ${err.message || 'Unknown error'}`);
       }
     } catch (error) {
-      alert('Error deleting project');
+      console.error(error);
+      showToast('Error deleting project');
     }
   };
 
@@ -136,6 +167,9 @@ export default function Dashboard() {
       body: formData,
     });
     const data = await res.json();
+    if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Upload failed');
+    }
     return data.url;
   };
 
@@ -164,20 +198,18 @@ export default function Dashboard() {
         projectUrl: finalProjectUrl,
         tags: tags.split(',').map(t => t.trim()).filter(Boolean),
         prdUrl,
-        categories: selectedCategories,
+        categories: selectedCategories.length > 0 ? selectedCategories : ['全部作品'],
         sortOrder: Number(sortOrder),
       };
 
       let res;
       if (isEditing && currentId) {
-        // Update
         res = await fetch(`/api/projects/${currentId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
       } else {
-        // Create
         res = await fetch('/api/projects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -190,18 +222,18 @@ export default function Dashboard() {
         fetchProjects();
         showToast(isEditing ? 'Project updated successfully!' : 'Project added successfully!');
       } else {
-        showToast('Failed to save project');
+        const err = await res.json();
+        showToast(`Save failed: ${err.message || 'Unknown error'}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      showToast('Error saving project');
+      showToast(`Error: ${error.message || 'Failed to save'}`);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleLogout = () => {
-      // Simple cookie clearing for demo (in real app, call logout API)
       document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       router.push('/admin/login');
   };
@@ -270,7 +302,7 @@ export default function Dashboard() {
                     <div className="w-24 h-24 relative flex-shrink-0 bg-slate-100 rounded-xl overflow-hidden border border-slate-100">
                        <Image 
                         src={project.imageUrl || "/background.png"} 
-                        alt={project.title} 
+                        alt={project.title || 'Untitled'} 
                         fill 
                         className="object-cover group-hover:scale-110 transition-transform duration-500" 
                        />
@@ -279,7 +311,7 @@ export default function Dashboard() {
                     {/* Info */}
                     <div className="flex-grow min-w-0 flex flex-col justify-center">
                       <div className="flex justify-between items-start">
-                          <h3 className="font-bold text-lg text-slate-800 truncate pr-4">{project.title}</h3>
+                          <h3 className="font-bold text-lg text-slate-800 truncate pr-4">{project.title || 'Untitled Project'}</h3>
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button 
                                 onClick={() => handleEdit(project)}
@@ -297,12 +329,12 @@ export default function Dashboard() {
                               </button>
                           </div>
                       </div>
-                      <p className="text-sm text-slate-500 line-clamp-2 mb-2">{project.description}</p>
+                      <p className="text-sm text-slate-500 line-clamp-2 mb-2">{project.description || 'No description provided'}</p>
                       <div className="mt-auto flex items-center gap-3 text-xs text-slate-400">
                         <span className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-full">
-                            <Zap size={10} /> {project.views} views
+                            <Zap size={10} /> {project.views || 0} views
                         </span>
-                        <a href={project.projectUrl} target="_blank" className="hover:text-blue-600 hover:underline">
+                        <a href={project.projectUrl || '#'} target="_blank" className="hover:text-blue-600 hover:underline">
                             Open Link
                         </a>
                       </div>
@@ -407,19 +439,7 @@ export default function Dashboard() {
                         placeholder="Type and press Enter to add..."
                         className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all mb-2"
                     />
-                    {/* Suggested Categories */}
-                    <div className="flex flex-wrap gap-2">
-                        {Array.from(new Set(projects.flatMap(p => p.categories || (p.category ? [p.category] : [])).filter(c => c && !selectedCategories.includes(c) && !["全部作品"].includes(c)))).map(cat => (
-                            <button
-                                key={cat}
-                                type="button"
-                                onClick={() => setSelectedCategories(prev => [...prev, cat])}
-                                className="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full hover:bg-slate-200 transition-colors"
-                            >
-                                + {cat}
-                            </button>
-                        ))}
-                    </div>
+                    
                 </div>
 
                 {/* Description */}
@@ -445,19 +465,6 @@ export default function Dashboard() {
                     placeholder="e.g. 2.5h Build, Gemini 3 Pro, Interactive"
                     className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 mb-2"
                     />
-                    {/* Suggested Tags */}
-                    <div className="flex flex-wrap gap-2">
-                        {Array.from(new Set(projects.flatMap(p => p.tags || []).filter(t => t && !tags.includes(t)))).slice(0, 10).map(tag => (
-                            <button
-                                key={tag}
-                                type="button"
-                                onClick={() => setTags(prev => prev ? `${prev}, ${tag}` : tag)}
-                                className="bg-slate-50 text-slate-500 text-xs px-2 py-1 rounded-md border border-slate-200 hover:bg-slate-100 transition-colors"
-                            >
-                                {tag}
-                            </button>
-                        ))}
-                    </div>
                 </div>
 
                 {/* PRD URL */}
@@ -511,7 +518,7 @@ export default function Dashboard() {
                             </div>
                             <div className="flex-grow min-w-0">
                                 <p className="text-sm font-medium text-slate-700 truncate">
-                                    {projectFile ? projectFile.name : (isEditing && projectUrl.startsWith('/uploads/') ? 'Keep existing file' : 'No file chosen')}
+                                    {projectFile ? projectFile.name : (isEditing && projectUrl && projectUrl.startsWith('/uploads/') ? 'Keep existing file' : 'No file chosen')}
                                 </p>
                                 <p className="text-xs text-slate-400">
                                     {projectFile ? `${(projectFile.size / 1024).toFixed(1)} KB` : 'Supports .html single file'}
