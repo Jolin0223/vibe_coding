@@ -3,6 +3,7 @@ import { supabase } from '@/utils/supabase';
 
 const TABLE_NAME = 'jolin_vibecoding_projects';
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge'; // 👉 就是缺了这一行！
 
 // DELETE: 删除项目
 export async function DELETE(
