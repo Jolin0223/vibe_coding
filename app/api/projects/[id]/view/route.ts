@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabase';
 
 const TABLE_NAME = 'jolin_vibecoding_projects';
+export const runtime = 'edge'; // 👉 新增这一行
 
 export async function POST(
   request: Request,

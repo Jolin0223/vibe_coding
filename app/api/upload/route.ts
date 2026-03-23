@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabase';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge'; // 👉 新增这一行
+
 
 export async function POST(request: Request) {
   try {

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/utils/supabase'; // 确保你按之前的步骤建了这个文件
+import { supabase } from '@/utils/supabase';
 
 const TABLE_NAME = 'jolin_vibecoding_projects';
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge'; // 👉 新增这一行
 
 // GET: 获取所有项目
 export async function GET() {
